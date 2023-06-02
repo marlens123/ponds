@@ -4,21 +4,30 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
 
 
-def data_pipeline(images, masks, augmentation=False, weight_classes=True):
+def data_pipeline(images, masks, augmentation=False, weight_classes=True, normalization='costum'):
   
   n_classes = 3
   print("Shape before expansion ...", images.shape)
+  print("Max before normalization ...", np.amax(images))
+  print("Min before normalization ...", np.amin(images))
+
+  if normalization=='costum':
+    orig_shape = images.shape
+    images_resh = images.reshape(-1,1)
+    scaler = MinMaxScaler()
+    normalized = scaler.fit_transform(images_resh)
+    images = normalized.reshape(orig_shape)
 
   # preprocessing
   images = np.expand_dims(images, axis=3)
 
   print("Shape after expansion ...", images.shape)
-  print("Max before normalization ...", np.amax(images))
-  print("Min before normalization ...", np.amin(images))
 
-  images = normalize(images, axis=1)
+  if not normalization=='costum':
+    images = normalize(images, axis=1) 
 
   print("Max after normalization ...", np.amax(images))
   print("Min after normalization ...", np.amin(images))

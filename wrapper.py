@@ -18,5 +18,3 @@ for p in patch_sizes:
 # batch_size
 # loss
 # weight_classes
-
-# check normalization
