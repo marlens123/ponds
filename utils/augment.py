@@ -1,5 +1,6 @@
 from keras.preprocessing.image import ImageDataGenerator
 import matplotlib.pyplot as plt
+import albumentations as A
 
 def augment(X_train, y_train, X_test, y_test):
   #New generator with rotation and shear where interpolation that comes with rotation and shear are thresholded in masks. 
@@ -56,3 +57,64 @@ def augment(X_train, y_train, X_test, y_test):
       plt.subplot(1,2,2)
       plt.imshow(mask[:,:,0])
       plt.show()
+
+
+def round_clip_0_1(x, **kwargs):
+    return x.round().clip(0, 1)
+
+# define heavy augmentations
+def get_training_augmentation():
+    train_transform = A.Compose([
+
+        A.HorizontalFlip(p=0.5),
+        A.VerticalFlip(p=0.5),
+
+        A.ShiftScaleRotate(scale_limit=0.5, rotate_limit=0, shift_limit=0.1, p=1, border_mode=0),
+
+        #A.PadIfNeeded(min_height=320, min_width=320, always_apply=True, border_mode=0),
+        #A.RandomCrop(height=(im_size/2), width=(im_size/2), always_apply=True),
+
+        #A.IAAAdditiveGaussianNoise(p=0.2),
+        #A.IAAPerspective(p=0.5),
+
+        """
+        A.OneOf(
+            [
+                A.CLAHE(p=1),
+                A.RandomBrightness(p=0.3),
+                A.RandomGamma(p=1),
+            ],
+            p=0.9,
+        ),
+        """
+
+        """
+        A.OneOf(
+            [
+                A.IAASharpen(p=1),
+                A.Blur(blur_limit=3, p=1),
+                A.MotionBlur(blur_limit=3, p=1),
+            ],
+            p=0.9,
+        ),
+        """
+        """
+        A.OneOf(
+            [
+                A.RandomContrast(p=1),
+                A.RandomBrightness(p=0.3),
+            ],
+            p=0.4,
+        ),
+        A.Lambda(mask=round_clip_0_1)
+        """
+    ])
+    return train_transform
+
+
+def get_validation_augmentation():
+    """Add paddings to make image shape divisible by 32"""
+    test_transform = [
+        A.PadIfNeeded(384, 480)
+    ]
+    return A.Compose(test_transform)

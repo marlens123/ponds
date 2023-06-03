@@ -10,10 +10,12 @@ from sklearn.preprocessing import MinMaxScaler
 def data_pipeline(images, masks, augmentation=False, weight_classes=True, normalization='costum'):
   
   n_classes = 3
+
   print("Shape before expansion ...", images.shape)
   print("Max before normalization ...", np.amax(images))
   print("Min before normalization ...", np.amin(images))
 
+  # preprocessing
   if normalization=='costum':
     orig_shape = images.shape
     images_resh = images.reshape(-1,1)
@@ -21,7 +23,6 @@ def data_pipeline(images, masks, augmentation=False, weight_classes=True, normal
     normalized = scaler.fit_transform(images_resh)
     images = normalized.reshape(orig_shape)
 
-  # preprocessing
   images = np.expand_dims(images, axis=3)
 
   print("Shape after expansion ...", images.shape)
@@ -44,15 +45,13 @@ def data_pipeline(images, masks, augmentation=False, weight_classes=True, normal
   print("Masks_resh shape ...", masks_resh.shape)
   print("Masks shape ...", masks.shape)
   print("Masks unique ...", np.unique(masks))
+  
   masks = np.expand_dims(masks, axis=3)
   masks = to_categorical(masks, num_classes=n_classes)
 
   print("Shape after onehot ...", masks.shape)
   print("Unique values mask ...", np.unique(masks))
   print("Type masks ...", masks[0].dtype)
-
-  # maybe not needed
-  masks = masks.reshape((masks.shape[0], masks.shape[1], masks.shape[2], n_classes))
 
   # train test split
   X_train, X_test, Y_train, Y_test = train_test_split(images, masks, test_size=0.2)
