@@ -27,20 +27,20 @@ mas = np.array([np.array(cv2.imread(fname, 0)) for fname in ma_list])
 augmentation = True
 weight_classes = True
 
-iou, loss = train_new(images, masks, 256, pref='kfold', kfold=True)
+#iou, loss = train_new(images, masks, 256, pref='kfold', kfold=True)
 
-iou = np.array(iou)
-loss = np.array(loss)
+#iou = np.array(iou)
+#loss = np.array(loss)
 
-np.save('E:/polar/code/data/ir/entire/original_size/kfold/iou256.npy', iou)
-np.save('E:/polar/code/data/ir/entire/original_size/kfold/loss256.npy', loss)
+#np.save('E:/polar/code/data/ir/entire/original_size/kfold/iou256.npy', iou)
+#np.save('E:/polar/code/data/ir/entire/original_size/kfold/loss256.npy', loss)
 
 #X_train, X_test, y_train, y_test, class_weights, im, ma = data_pipeline(images, masks, augmentation, weight_classes)
 #X_train, X_test, y_train, y_test, model = train_imnet(images, masks, images_aug, masks_aug, 256, pref='256_basebs4methrclw50e')
 #X_train, X_test, y_train, y_test, model = train_imnet(images, masks, images_aug, masks_aug, 256, pref='256_augbs4methrclw50eaugonfly', augment=True)
 
 
-#X_train, X_test, y_train, y_test, model = train_new(images, masks, 256, pref='256_vis')
+X_train, X_test, y_train, y_test, model = train_new(images, masks, 256, pref='256motionaug')
 #np.save('E:/polar/code/data/ir/entire/original_size/prepared/vis256.npy', X_train)
 #np.save('E:/polar/code/data/ir/entire/original_size/prepared/vis256.npy', X_test)
 #np.save('E:/polar/code/data/ir/entire/original_size/prepared/vis256.npy', y_train)
