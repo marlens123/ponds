@@ -277,7 +277,7 @@ def train_new(X, y, im_size, pref, batch_size=4, augment=True, weight_classes=Tr
             print(f'> Fold {i+1} - Loss: {loss_per_fold[i]} - IoU: {iou_per_fold[i]}%')
         print('------------------------------------------------------------------------')
         print('Average scores for all folds:')
-        print(f'> Accuracy: {np.mean(iou_per_fold)} (+- {np.std(iou_per_fold)})')
+        print(f'> IoU: {np.mean(iou_per_fold)} (+- {np.std(iou_per_fold)})')
         print(f'> Loss: {np.mean(loss_per_fold)}')
         print('------------------------------------------------------------------------')
 
