@@ -58,8 +58,6 @@ def train(model, X_train, Y_train, X_test, Y_test, batch_size=8, optimizer=Adam,
   ##################################################
 
 
-
-
 def get_IoU(model, X_test, Y_test):
   model = model
   model.load_weights('???.hdf5')  
@@ -169,6 +167,10 @@ def preprocess_prediction(image):
     image = np.expand_dims(image, axis=0)
     
     return image
+
+
+
+
 
 # Predict function
 def patch_predict(model, image, patch_size):
