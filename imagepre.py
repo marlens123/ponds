@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import pickle
 from matplotlib import pyplot as plt
 import segmentation_models as sm
 from sklearn.model_selection import train_test_split
@@ -7,11 +8,11 @@ from keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import to_categorical
 from sklearn.utils import class_weight
 import keras
-from utils.aug_on_fly import get_training_augmentation, get_preprocessing
+from utils.augmentation import get_training_augmentation, get_preprocessing, offline_augmentation
 from utils.data import Dataloder, Dataset
 from sklearn.model_selection import KFold
 
-def train_imnet(images, masks, imaug, maaug, size, pref, augment=False, weight_classes=True, batch_size=4, kfold=False):
+def train_imnet(images, masks, imaug, maaug, size, pref, backbone='resnet34', loss='categorical_crossentropy', augment=False, weight_classes=True, batch_size=4, kfold=False):
 
     ######## Reshape Input ############
     print(images[0].dtype)
@@ -38,8 +39,8 @@ def train_imnet(images, masks, imaug, maaug, size, pref, augment=False, weight_c
 
     ######## Preprocessing ###########
 
-    BACKBONE='resnet34'
-    preprocess_input = sm.get_preprocessing(BACKBONE)
+    BACKBONE=backbone
+    preprocess_input = sm.get_preprocessing(backbone)
     images = preprocess_input(images)
     imaug = preprocess_input(imaug)
 
@@ -79,8 +80,6 @@ def train_imnet(images, masks, imaug, maaug, size, pref, augment=False, weight_c
     else:
         class_weights = None
 
-    
-
     ######### Model Training #########
 
     dice_loss = sm.losses.DiceLoss(class_weights=class_weights) 
@@ -112,6 +111,9 @@ def train_imnet(images, masks, imaug, maaug, size, pref, augment=False, weight_c
     # fill with hyperparameter setting
     model.save('{}_baseline.hdf5'.format(pref))
 
+    with open('{}_trainHistoryDict'.format(pref), 'wb') as file_pi:
+        pickle.dump(history.history, file_pi)
+
         # plot loss and iou
     if not kfold:
         # Plot training & validation iou_score values
@@ -132,13 +134,25 @@ def train_imnet(images, masks, imaug, maaug, size, pref, augment=False, weight_c
         plt.ylabel('Loss')
         plt.xlabel('Epoch')
         plt.legend(['Train', 'Test'], loc='upper left')
+
         plt.savefig(os.path.join('E:/polar/code/data/ir/figures', '{}_iou_loss'.format(pref)))
 
     return X_train, X_test, y_train, y_test, model
 
 
-def run_train(X_train, y_train, X_test, y_test, model, augmentation, pref, kfold=False):
+################################################################################################
+################################################################################################
+################################################################################################
+
+
+def run_train(X_train, y_train, X_test, y_test,
+              model, pref,
+              backbone='inceptionv3', batch_size=4, 
+              augmentation=None, kfold=False):
+    
     CLASSES=['melt_pond', 'sea_ice']
+    BACKBONE = backbone
+    BATCH_SIZE = batch_size
     
     # Dataset for train images
     train_dataset = Dataset(
@@ -146,7 +160,7 @@ def run_train(X_train, y_train, X_test, y_test, model, augmentation, pref, kfold
         y_train, 
         classes=CLASSES, 
         augmentation=augmentation,
-        preprocessing=get_preprocessing(sm.get_preprocessing('resnet34')),
+        preprocessing=get_preprocessing(sm.get_preprocessing(BACKBONE)),
     )
 
     # Dataset for validation images
@@ -154,14 +168,16 @@ def run_train(X_train, y_train, X_test, y_test, model, augmentation, pref, kfold
         X_test, 
         y_test, 
         classes=CLASSES, 
-        preprocessing=get_preprocessing(sm.get_preprocessing('resnet34')),
+        preprocessing=get_preprocessing(sm.get_preprocessing(BACKBONE)),
     )
 
-    train_dataloader = Dataloder(train_dataset, batch_size=4, shuffle=True)
+    train_dataloader = Dataloder(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     valid_dataloader = Dataloder(valid_dataset, batch_size=1, shuffle=False)
 
+    # save weights of best performing model in terms of val_loss
     callbacks = [
         keras.callbacks.ModelCheckpoint('./best_model{}.h5'.format(pref), save_weights_only=True, save_best_only=True, mode='min'),
+        # reduces learning rate when metric has stopped improving
         keras.callbacks.ReduceLROnPlateau(),
     ]
 
@@ -172,12 +188,14 @@ def run_train(X_train, y_train, X_test, y_test, model, augmentation, pref, kfold
                         epochs=40,  
                         validation_data=valid_dataloader, 
                         validation_steps=len(valid_dataloader),
-                        #class_weight=class_weights,
                         shuffle=False)
 
     if not kfold:
-        # fill with hyperparameter setting
-        model.save('{}_baseline.hdf5'.format(pref))
+        #model.save('{}_baseline.hdf5'.format(pref))
+
+        # save model scores
+        with open('{}_trainHistoryDict'.format(pref), 'wb') as file_pi:
+            pickle.dump(history.history, file_pi)
     
     if not kfold:
         # Plot training & validation iou_score values
@@ -198,7 +216,8 @@ def run_train(X_train, y_train, X_test, y_test, model, augmentation, pref, kfold
         plt.ylabel('Loss')
         plt.xlabel('Epoch')
         plt.legend(['Train', 'Test'], loc='upper left')
-        plt.savefig(os.path.join('E:/polar/code/data/ir/figures', '{}_iou_loss'.format(pref)))
+
+        plt.savefig(os.path.join('E:/polar/code/data/ir/figures/final', '{}_iou_loss'.format(pref)))
     
     if kfold:
         # Generate generalization metrics
@@ -210,27 +229,53 @@ def run_train(X_train, y_train, X_test, y_test, model, augmentation, pref, kfold
 
 
 
-def train_new(X, y, im_size, pref, batch_size=4, augment=True, weight_classes=True, kfold=False):
+def train_new(X, y, im_size, pref, mode=0, backbone='inceptionv3', loss='categoricalCE',
+              optimizer='Adam', train_transfer=None,
+              batch_size=4, augmentation=None, weight_classes=False, kfold=False):
     
-    masks_resh = y.reshape(-1,1)
-    masks_resh_list = masks_resh.flatten().tolist()
-    
-    preprocess_input = sm.get_preprocessing('resnet34')
-    augmentation = get_training_augmentation(im_size)
-    optimizer = keras.optimizers.Adam()
-
     if weight_classes:
+        masks_resh = y.reshape(-1,1)
+        masks_resh_list = masks_resh.flatten().tolist()
         class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(masks_resh), y=masks_resh_list)
         print("Class weights are...:", class_weights)
     else:
         class_weights = None
 
-    dice_loss = sm.losses.DiceLoss(class_weights=class_weights) 
-    focal_loss = sm.losses.CategoricalFocalLoss()
-    LOSS = dice_loss + (1 * focal_loss)
+    ################################################################
+    
+    BACKBONE = backbone
+    LOSS = loss
+    OPTIMIZER = optimizer
+    TRAIN_TRANSFER = train_transfer
+    AUGMENTATION = augmentation
+    BATCH_SIZE = batch_size
 
-    model = sm.Unet('resnet34', input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights='imagenet')
-    model.compile('Adam', loss=LOSS, metrics=[sm.metrics.IOUScore(threshold=0.5)])
+    # perform on-fly augmentation also when offline augmentation
+    if AUGMENTATION == 'on_fly':    
+        on_fly = get_training_augmentation(im_size=im_size, mode=mode)
+    else:
+        on_fly = None
+
+    if LOSS == 'jaccard':
+        LOSS = sm.losses.JaccardLoss(class_weights=class_weights)
+    elif LOSS == 'focal_dice':
+        dice_loss = sm.losses.DiceLoss(class_weights=class_weights) 
+        focal_loss = sm.losses.CategoricalFocalLoss()
+        LOSS = dice_loss + (1 * focal_loss)
+    else:
+        LOSS = sm.losses.CategoricalCELoss(class_weights=class_weights)
+
+    if OPTIMIZER == 'Adam':
+        OPTIMIZER = keras.optimizers.Adam()
+    else:
+        print('No optimizer specified')
+
+    #################################################################
+
+    model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER)
+    
+    # threshold value in iou metric will round predictions
+    model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[sm.metrics.IOUScore(threshold=0.5)])
     print(model.summary())
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -240,11 +285,16 @@ def train_new(X, y, im_size, pref, batch_size=4, augment=True, weight_classes=Tr
     print("Test size imgs ...", X_test.shape)
     print("Test size masks ...", y_test.shape)
 
-    if not kfold:
-        model = run_train(X_train, y_train, X_test, y_test, model=model, augmentation=augmentation, pref=pref)
+    if AUGMENTATION == 'offline':
+        X_train, y_train = offline_augmentation(X_train, y_train, im_size=im_size, mode=mode)
 
+    if not kfold:
+        model = run_train(X_train, y_train, X_test, y_test, 
+                          backbone=BACKBONE, batch_size=BATCH_SIZE,
+                          model=model, augmentation=on_fly, pref=pref)
+
+    # 10-crossfold augmentation
     else:
-        
         num_folds = 10
 
         iou_per_fold = []
@@ -260,7 +310,8 @@ def train_new(X, y, im_size, pref, batch_size=4, augment=True, weight_classes=Tr
         # K-fold Cross Validation model evaluation
         fold_no = 1
         for train, test in kfold.split(X, y):
-            model, scores = run_train(X[train], y[train], X[test], y[test], model, augmentation, pref, kfold=True)
+            model, scores = run_train(X[train], y[train], X[test], y[test], model=model, augmentation=on_fly, pref=pref, 
+                                      backbone=BACKBONE, batch_size=BATCH_SIZE, kfold=True)
 
             print(f'Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]}; {model.metrics_names[1]} of {scores[1]*100}%')
             iou_per_fold.append(scores[1] * 100)

@@ -96,6 +96,12 @@ for im in os.listdir(save_path):
 
     imgs_png.append(im)
 
+imgs_raw = np.array(imgs_png)
+masks_raw = np.array(masks_train)
+
+# save 480 array
+np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_im.npy', imgs_raw)
+np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_ma.npy', masks_raw)
 
 patches_256_raw = patch_extraction(imgs_png, masks_train, size=256, step=224) # step 224 means that there will be overlap
 patches_128_raw = patch_extraction(imgs_png, masks_train, size=128, step=160) # step 120 means that there will be overlap
