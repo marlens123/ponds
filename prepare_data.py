@@ -6,19 +6,6 @@ import cv2
 from utils.image_transform import crop_center_square, transform_color, resize_image
 from patchify import patchify
 
-
-############## Visualize IR ################
-def visualize_ir(img, idx=None, cmap='cividis', colorbar=False, save_path=None):
-    plt.imshow(img, cmap=cmap)
-
-    if colorbar:
-        plt.colorbar()
-    
-    if not save_path==None:
-        #img = np.clip(img, 273, 276)
-        #cv2.imwrite(os.path.join(save_path, '{}.png'.format(idx)), img)
-        plt.imsave(os.path.join(save_path, '{}.png'.format(idx)), img, cmap='gray')
-
 ############################################
 
 ir_dir = 'E:/polar/code/data/flight9/IRdata_ATWAICE_processed_220718_142920.nc'

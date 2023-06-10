@@ -229,9 +229,10 @@ def run_train(X_train, y_train, X_test, y_test,
 
 
 
-def train_new(X, y, im_size, pref, mode=0, backbone='inceptionv3', loss='categoricalCE',
+def train_new(X, y, im_size, pref, backbone='inceptionv3', loss='categoricalCE',
               optimizer='Adam', train_transfer=None,
-              batch_size=4, augmentation=None, weight_classes=False, kfold=False):
+              batch_size=4, augmentation=None, mode=0, 
+              weight_classes=False, kfold=False):
     
     if weight_classes:
         masks_resh = y.reshape(-1,1)
@@ -273,7 +274,7 @@ def train_new(X, y, im_size, pref, mode=0, backbone='inceptionv3', loss='categor
     #################################################################
 
     model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER)
-    
+
     # threshold value in iou metric will round predictions
     model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[sm.metrics.IOUScore(threshold=0.5)])
     print(model.summary())
