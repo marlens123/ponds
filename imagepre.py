@@ -231,7 +231,7 @@ def run_train(X_train, y_train, X_test, y_test,
 
 def train_new(X, y, im_size, pref, backbone='inceptionv3', loss='categoricalCE',
               optimizer='Adam', train_transfer=None,
-              batch_size=4, augmentation=None, mode=0, 
+              batch_size=4, augmentation=None, mode=0, factor=2,
               weight_classes=False, kfold=False):
     
     if weight_classes:
@@ -280,14 +280,14 @@ def train_new(X, y, im_size, pref, backbone='inceptionv3', loss='categoricalCE',
     print(model.summary())
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
+
+    if AUGMENTATION == 'offline':
+        X_train, y_train = offline_augmentation(X_train, y_train, im_size=im_size, mode=mode, factor=factor)
+
     print("Train size imgs ...", X_train.shape)
     print("Train size masks ...", y_train.shape)
     print("Test size imgs ...", X_test.shape)
     print("Test size masks ...", y_test.shape)
-
-    if AUGMENTATION == 'offline':
-        X_train, y_train = offline_augmentation(X_train, y_train, im_size=im_size, mode=mode)
 
     if not kfold:
         model = run_train(X_train, y_train, X_test, y_test, 

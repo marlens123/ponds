@@ -122,18 +122,65 @@ np.save('E:/polar/code/data/ir/final/baseline/480_xtrain.npy', X_train)
 np.save('E:/polar/code/data/ir/final/baseline/480_xtest.npy', X_test)
 np.save('E:/polar/code/data/ir/final/baseline/480_ytrain.npy', y_train)
 np.save('E:/polar/code/data/ir/final/baseline/480_ytest.npy', y_test)
+
+# mode 2 on fly
+X_train, X_test, y_train, y_test, model = train_new(images256, masks256, im_size=256, augmentation='on_fly', mode=2, train_transfer='imagenet', backbone='resnet34', pref='augment_mode2')
+np.save('E:/polar/code/data/ir/prefinal/mode2_xtrain.npy', X_train)
+np.save('E:/polar/code/data/ir/prefinal/mode2_xtest.npy', X_test)
+np.save('E:/polar/code/data/ir/prefinal/mode2_ytrain.npy', y_train)
+np.save('E:/polar/code/data/ir/prefinal/mode2_ytest.npy', y_test)
+
+# mode 3 on fly
+X_train, X_test, y_train, y_test, model = train_new(images256, masks256, im_size=256, augmentation='on_fly', mode=3, train_transfer='imagenet', backbone='resnet34', pref='augment_mode3')
+np.save('E:/polar/code/data/ir/prefinal/mode3_xtrain.npy', X_train)
+np.save('E:/polar/code/data/ir/prefinal/mode3_xtest.npy', X_test)
+np.save('E:/polar/code/data/ir/prefinal/mode3_ytrain.npy', y_train)
+np.save('E:/polar/code/data/ir/prefinal/mode3_ytest.npy', y_test)
+
+# mode 4 on fly
+X_train, X_test, y_train, y_test, model = train_new(images256, masks256, im_size=256, augmentation='on_fly', mode=4, train_transfer='imagenet', backbone='resnet34', pref='augment_mode4')
+np.save('E:/polar/code/data/ir/prefinal/mode4_xtrain.npy', X_train)
+np.save('E:/polar/code/data/ir/prefinal/mode4_xtest.npy', X_test)
+np.save('E:/polar/code/data/ir/prefinal/mode4_ytrain.npy', y_train)
+np.save('E:/polar/code/data/ir/prefinal/mode4_ytest.npy', y_test)
+
+# offline augmentation magnitude 2
+
+# mode 1 offline
+X_train, X_test, y_train, y_test, model = train_new(images256, masks256, im_size=256, augmentation='offline', mode=1, factor=2, train_transfer='imagenet', backbone='resnet34', pref='offline2_mode1')
+np.save('E:/polar/code/data/ir/prefinal/mode1_offline2_xtrain.npy', X_train)
+np.save('E:/polar/code/data/ir/prefinal/mode1_offline2_xtest.npy', X_test)
+np.save('E:/polar/code/data/ir/prefinal/mode1_offline2_ytrain.npy', y_train)
+np.save('E:/polar/code/data/ir/prefinal/mode1_offline2_ytest.npy', y_test)
+
+# offline augmentation magnitude 5
+
+# mode 1 offline
+X_train, X_test, y_train, y_test, model = train_new(images256, masks256, im_size=256, augmentation='offline', mode=1, factor=5, train_transfer='imagenet', backbone='resnet34', pref='offline5_mode1')
+np.save('E:/polar/code/data/ir/prefinal/mode1_offline5_xtrain.npy', X_train)
+np.save('E:/polar/code/data/ir/prefinal/mode1_offline5_xtest.npy', X_test)
+np.save('E:/polar/code/data/ir/prefinal/mode1_offline5_ytrain.npy', y_train)
+np.save('E:/polar/code/data/ir/prefinal/mode1_offline5_ytest.npy', y_test)
+
+########################################################################################
+
+X_train, X_test, y_train, y_test, model = train_new(images256, masks256, im_size=256, train_transfer=None, backbone='resnet34', pref='scratch')
+np.save('E:/polar/code/data/ir/prefinal/scratch_xtrain.npy', X_train)
+np.save('E:/polar/code/data/ir/prefinal/scratch_xtest.npy', X_test)
+np.save('E:/polar/code/data/ir/prefinal/scratch_ytrain.npy', y_train)
+np.save('E:/polar/code/data/ir/prefinal/scratch_ytest.npy', y_test)
+
+
+# add best augmentation
+X_train, X_test, y_train, y_test, model = train_new(images256, masks256, im_size=256, train_transfer='imagenet', backbone='resnet34', weight_classes=True, loss='focal_dice', pref='class_imbalance')
+np.save('E:/polar/code/data/ir/prefinal/classwei_xtrain.npy', X_train)
+np.save('E:/polar/code/data/ir/prefinal/classwei_xtest.npy', X_test)
+np.save('E:/polar/code/data/ir/prefinal/classwei_ytrain.npy', y_train)
+np.save('E:/polar/code/data/ir/prefinal/classwei_ytest.npy', y_test)
 """
 
-# mode 0 on fly
-X_train, X_test, y_train, y_test, model = train_new(images256, masks256, im_size=256, augmentation='on_fly', mode=0, train_transfer='imagenet', backbone='resnet34', pref='augment_mode0')
-np.save('E:/polar/code/data/ir/prefinal/mode0_xtrain.npy', X_train)
-np.save('E:/polar/code/data/ir/prefinal/mode0_xtest.npy', X_test)
-np.save('E:/polar/code/data/ir/prefinal/mode0_ytrain.npy', y_train)
-np.save('E:/polar/code/data/ir/prefinal/mode0_ytest.npy', y_test)
-
-# mode 1 on fly
-X_train, X_test, y_train, y_test, model = train_new(images256, masks256, im_size=256, augmentation='on_fly', mode=1, train_transfer='imagenet', backbone='resnet34', pref='augment_mode1')
-np.save('E:/polar/code/data/ir/prefinal/mode1__xtrain.npy', X_train)
-np.save('E:/polar/code/data/ir/prefinal/mode1__xtest.npy', X_test)
-np.save('E:/polar/code/data/ir/prefinal/mode1__ytrain.npy', y_train)
-np.save('E:/polar/code/data/ir/prefinal/mode1__ytest.npy', y_test)
+X_train, X_test, y_train, y_test, model = train_new(images, masks, im_size=256, train_transfer='imagenet', backbone='resnet34', pref='baseline2')
+np.save('E:/polar/code/data/ir/prefinal/base2_xtrain.npy', X_train)
+np.save('E:/polar/code/data/ir/prefinal/base2_xtest.npy', X_test)
+np.save('E:/polar/code/data/ir/prefinal/base2_ytrain.npy', y_train)
+np.save('E:/polar/code/data/ir/prefinal/base2_ytest.npy', y_test)

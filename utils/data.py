@@ -73,6 +73,9 @@ class Dataset:
         print(mask.shape)
         print(np.unique(mask))
 
+        image = image.astype(np.float32)
+        mask = mask.astype(np.float32)
+
         # apply augmentations
         if self.augmentation:
             sample = self.augmentation(image=image, mask=mask)
@@ -83,8 +86,7 @@ class Dataset:
             sample = self.preprocessing(image=image, mask=mask)
             image, mask = sample['image'], sample['mask']
 
-        image = image.astype(np.float32)
-        mask = mask.astype(np.float32)
+
 
         print("Shape image: {}".format(image.shape))
         print("Shape mask: {}".format(mask.shape))
