@@ -333,6 +333,9 @@ def train_new(X, y, im_size, pref, backbone='inceptionv3', loss='categoricalCE',
         print(f'> Loss: {np.mean(loss_per_fold)}')
         print('------------------------------------------------------------------------')
 
+        iou_per_fold = np.array(iou_per_fold)
+        loss_per_fold = np.array(loss_per_fold)
+
         return iou_per_fold, loss_per_fold
 
     return X_train, X_test, y_train, y_test, model

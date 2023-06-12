@@ -177,10 +177,21 @@ np.save('E:/polar/code/data/ir/prefinal/classwei_xtrain.npy', X_train)
 np.save('E:/polar/code/data/ir/prefinal/classwei_xtest.npy', X_test)
 np.save('E:/polar/code/data/ir/prefinal/classwei_ytrain.npy', y_train)
 np.save('E:/polar/code/data/ir/prefinal/classwei_ytest.npy', y_test)
-"""
+
 
 X_train, X_test, y_train, y_test, model = train_new(images, masks, im_size=256, train_transfer='imagenet', backbone='resnet34', pref='baseline2')
 np.save('E:/polar/code/data/ir/prefinal/base2_xtrain.npy', X_train)
 np.save('E:/polar/code/data/ir/prefinal/base2_xtest.npy', X_test)
 np.save('E:/polar/code/data/ir/prefinal/base2_ytrain.npy', y_train)
 np.save('E:/polar/code/data/ir/prefinal/base2_ytest.npy', y_test)
+"""
+
+X_train, X_test, y_train, y_test, model = train_new(images256, masks256, im_size=256, augmentation='offline', mode=1, factor=20, train_transfer='imagenet', backbone='resnet34', pref='offline20_mode1')
+np.save('E:/polar/code/data/ir/prefinal/offline20_xtrain.npy', X_train)
+np.save('E:/polar/code/data/ir/prefinal/offline20_xtest.npy', X_test)
+np.save('E:/polar/code/data/ir/prefinal/offline20_ytrain.npy', y_train)
+np.save('E:/polar/code/data/ir/prefinal/offline20_ytest.npy', y_test)
+
+iou, loss = train_new(images256, masks256, im_size=256, train_transfer='imagenet', backbone='resnet34', pref='kfold_baseline', kfold=True)
+np.save('E:/polar/code/data/ir/prefinal/kfold_base_iou.npy', iou)
+np.save('E:/polar/code/data/ir/prefinal/kfold_base_loss.npy', loss)
