@@ -2,7 +2,7 @@ import numpy as np
 import os
 import pickle
 from matplotlib import pyplot as plt
-import segmentation_models as sm
+import models.segmentation_models_qubvel as sm
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import to_categorical
@@ -11,6 +11,7 @@ import keras
 from utils.augmentation import get_training_augmentation, get_preprocessing, offline_augmentation
 from utils.data import Dataloder, Dataset
 from sklearn.model_selection import KFold
+#from models.segmentation_models.unet import Unet
 
 def train_imnet(images, masks, imaug, maaug, size, pref, backbone='resnet34', loss='categorical_crossentropy', augment=False, weight_classes=True, batch_size=4, kfold=False):
 
@@ -176,7 +177,7 @@ def run_train(X_train, y_train, X_test, y_test,
 
     # save weights of best performing model in terms of val_loss
     callbacks = [
-        keras.callbacks.ModelCheckpoint('./best_model{}.h5'.format(pref), save_weights_only=True, save_best_only=True, mode='min'),
+        keras.callbacks.ModelCheckpoint('./weights/best_model{}.h5'.format(pref), save_weights_only=True, save_best_only=True, mode='min'),
         # reduces learning rate when metric has stopped improving
         keras.callbacks.ReduceLROnPlateau(),
     ]
@@ -191,10 +192,8 @@ def run_train(X_train, y_train, X_test, y_test,
                         shuffle=False)
 
     if not kfold:
-        #model.save('{}_baseline.hdf5'.format(pref))
-
         # save model scores
-        with open('{}_trainHistoryDict'.format(pref), 'wb') as file_pi:
+        with open('scores.{}_trainHistoryDict'.format(pref), 'wb') as file_pi:
             pickle.dump(history.history, file_pi)
     
     if not kfold:
@@ -230,9 +229,9 @@ def run_train(X_train, y_train, X_test, y_test,
 
 
 def train_new(X, y, im_size, pref, backbone='inceptionv3', loss='categoricalCE',
-              optimizer='Adam', train_transfer=None,
+              optimizer='Adam', train_transfer=None, encoder_freeze=False,
               batch_size=4, augmentation=None, mode=0, factor=2,
-              weight_classes=False, kfold=False):
+              weight_classes=False, kfold=False, use_dropout=False, use_batchnorm=True):
     
     if weight_classes:
         masks_resh = y.reshape(-1,1)
@@ -273,7 +272,8 @@ def train_new(X, y, im_size, pref, backbone='inceptionv3', loss='categoricalCE',
 
     #################################################################
 
-    model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER)
+    model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER,
+                    decoder_use_dropout=use_dropout, decoder_use_batchnorm=use_batchnorm, encoder_freeze=False)
 
     # threshold value in iou metric will round predictions
     model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[sm.metrics.IOUScore(threshold=0.5)])
