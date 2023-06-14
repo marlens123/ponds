@@ -6,25 +6,31 @@ import cv2
 def round_clip_0_1(x, **kwargs):
     return x.round().clip(0, 1)
 
-# define heavy augmentations
+
 def get_training_augmentation(im_size, mode=0):
     """
+    Defines augmentation for training data. Each technique applied with a probability.
+    
     Parameters:
     -----------
         mode : int
             defines methods used (for experimental reasons).
-            one of 0: flip, crop
-                   1: + rotate
-                   2: + brightness, contrast
-                   3: + sharpen, blur
-                   4: + gaussian noise injection
+            one of 0: flip, rotate
+                   1: flip, rotate, crop
+                   2: flip, rotate, crop, brightness, contrast
+                   3: flip, rotate, crop, sharpen, blur
+                   4: flip, rotate, crop, sharpen, blur, gaussian noise injection
+    
+    Return:
+    -------
+        train_transform : albumentations.compose
     """
     if mode == 0:
         train_transform = [
             A.HorizontalFlip(),
             A.VerticalFlip(),
             # interpolation 0 means nearest interpolation such that mask labels are preserved
-            A.RandomSizedCrop(min_max_height=[int(0.5*im_size), int(0.8*im_size)], height=im_size, width=im_size, interpolation=0, p=0.5),
+            A.Rotate(interpolation=0),            
         ]
         return A.Compose(train_transform)
 
@@ -43,7 +49,7 @@ def get_training_augmentation(im_size, mode=0):
             A.VerticalFlip(),
             A.RandomSizedCrop(min_max_height=[int(0.5*im_size), int(0.8*im_size)], height=im_size, width=im_size, interpolation=0, p=0.5),
             A.Rotate(interpolation=0),
-            A.RandomBrightnessContrast(brightness_by_max=False),
+            A.RandomBrightnessContrast(),
         ]
         return A.Compose(train_transform)
     
@@ -53,7 +59,6 @@ def get_training_augmentation(im_size, mode=0):
             A.VerticalFlip(),
             A.RandomSizedCrop(min_max_height=[int(0.5*im_size), int(0.8*im_size)], height=im_size, width=im_size, interpolation=0, p=0.5),
             A.Rotate(interpolation=0),
-            #A.RandomBrightnessContrast(brightness_by_max=False),
             A.OneOf(
                 [
                     A.Sharpen(p=1),
@@ -71,18 +76,30 @@ def get_training_augmentation(im_size, mode=0):
             A.VerticalFlip(),
             A.RandomSizedCrop(min_max_height=[int(0.5*im_size), int(0.8*im_size)], height=im_size, width=im_size, interpolation=0, p=0.5),
             A.Rotate(interpolation=0),
+            A.OneOf(
+                [
+                    A.Sharpen(p=1),
+                    A.Blur(p=1),
+                    A.MotionBlur(p=1),
+                ],
+                p=0.5,
+            ),
             A.GaussNoise(),
         ]
         return A.Compose(train_transform)
 
 
 def get_preprocessing(preprocessing_fn):
-    """Construct preprocessing transform
+    """
+    Preprocessing function.
     
-    Args:
-        preprocessing_fn (callbale): data normalization function 
+    Parameters:
+    -----------
+        preprocessing_fn : data normalization function 
             (can be specific for each pretrained neural network)
+    
     Return:
+    -------
         transform: albumentations.Compose
     
     """
@@ -94,9 +111,29 @@ def get_preprocessing(preprocessing_fn):
 
 
 def offline_augmentation(trainX, trainy, im_size, mode, factor=2):
-  # trainX and trainY are np arrays
+  """
+  Applies offline augmentation. Ds size will be increased by factor.
 
-  print(factor)
+  Parameters:
+  ----------
+    trainX : np.ndarray
+        original train images
+    trainy : np.ndarray
+        original train masks
+    im_size : int
+        image size
+    mode : int
+        experimental augmentation mode (see above)
+    factor : int
+
+  Return:
+  -------
+    trainX_new : np.ndarray
+        new train images
+    trainy_new : np.ndarray
+        new train masks
+
+  """
 
   im_aug_list = []
   ma_aug_list = []
@@ -116,10 +153,6 @@ def offline_augmentation(trainX, trainy, im_size, mode, factor=2):
 
   trainX_new = np.concatenate((trainX, im_aug_np), axis=0)
   trainy_new = np.concatenate((trainy, ma_aug_np), axis=0)
-
-  # shuffle again such that augmented and original are mixed
-  #random.Random(4).shuffle(trainX_new)
-  #random.Random(4).shuffle(trainy_new)
 
   return trainX_new, trainy_new
 
