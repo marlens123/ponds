@@ -1,3 +1,4 @@
+import tensorflow as tf
 import numpy as np
 import os
 import pickle
@@ -5,151 +6,31 @@ from matplotlib import pyplot as plt
 import models.segmentation_models_qubvel as sm
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.utils import to_categorical
 from sklearn.utils import class_weight
 import keras
 from utils.augmentation import get_training_augmentation, get_preprocessing, offline_augmentation
 from utils.data import Dataloder, Dataset
 from sklearn.model_selection import KFold
-#from models.segmentation_models.unet import Unet
 
-def train_imnet(images, masks, imaug, maaug, size, pref, backbone='resnet34', loss='categorical_crossentropy', augment=False, weight_classes=True, batch_size=4, kfold=False):
+import wandb
+from wandb.keras import WandbMetricsLogger
 
-    ######## Reshape Input ############
-    print(images[0].dtype)
-    print("Original im shape ...", images.shape)
-    
-    # sm.unet expects 3 channel input
-    images = np.stack((images,)*3, axis=-1)
-    imaug = np.stack((imaug,)*3, axis=-1)
+wandb.login()
 
-    print("New im shape ...", images.shape)
-    print("Original masks shape ...", masks.shape)
+from timeit import default_timer as timer
 
-    masks_resh = masks.reshape(-1,1)
-    # Convert masks_resh to a list
-    masks_resh_list = masks_resh.flatten().tolist()
-
-    masks = np.expand_dims(masks, -1)
-    masks = to_categorical(masks, num_classes=3)
-    maaug = np.expand_dims(maaug, -1)
-    maaug = to_categorical(maaug, num_classes=3)
-
-    print("New masks shape ...", masks.shape)
-    print("Pixel values in the mask are: ", np.unique(masks))
-
-    ######## Preprocessing ###########
-
-    BACKBONE=backbone
-    preprocess_input = sm.get_preprocessing(backbone)
-    images = preprocess_input(images)
-    imaug = preprocess_input(imaug)
-
-    print("Im shape after preprocessing ...", images.shape)
-
-    ######### Train Test Split ########
-
-    X_train, X_test, y_train, y_test = train_test_split(images, masks, test_size=0.2, random_state=42)
-
-    if augment:
-        X_train = [j for i in [X_train, imaug] for j in i]
-        y_train = [j for i in [y_train, maaug] for j in i]
-
-        X_train = np.array(X_train)
-        y_train = np.array(y_train)
-
-        # Generate shuffled indices
-        indices = np.random.permutation(len(X_train))
-
-        # Shuffle both arrays using the indices
-        X_train = X_train[indices]
-        y_train = y_train[indices]
-
-    print("train shape ...", X_train.shape)
-    print("train shape y...", y_train.shape)
-    print("test shape ...", X_test.shape)
-    print("test shape y...", y_test.shape)
-
-    print(X_train[0].dtype)
-    print(X_test[0].dtype)
-
-    ######### Augmentation ###########
-
-    if weight_classes:
-        class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(masks_resh), y=masks_resh_list)
-        print("Class weights are...:", class_weights)
-    else:
-        class_weights = None
-
-    ######### Model Training #########
-
-    dice_loss = sm.losses.DiceLoss(class_weights=class_weights) 
-    focal_loss = sm.losses.CategoricalFocalLoss()
-    LOSS = dice_loss + (1 * focal_loss)
+# inspiration: https://stackoverflow.com/questions/57181551/can-i-write-a-keras-callback-that-records-and-returns-the-total-training-time
+class TimingCallback(keras.callbacks.Callback):
+    def __init__(self, logs={}):
+        self.logs=[]
+    def on_epoch_begin(self, epoch, logs={}):
+        self.starttime = timer()
+    def on_epoch_end(self, epoch, logs={}):
+        self.logs.append(timer()-self.starttime)
 
 
-    model = sm.Unet(BACKBONE, input_shape=(size, size, 3), classes=3, activation='softmax', encoder_weights='imagenet')
-    model.compile('Adam', loss=LOSS, metrics=[sm.metrics.IOUScore(threshold=0.5)])
-    print(model.summary())
-
-    # define callbacks for learning rate scheduling and best checkpoints saving
-    callbacks = [
-        keras.callbacks.ModelCheckpoint('./best_model{}.h5'.format(size), save_weights_only=True, save_best_only=True, mode='min'),
-        keras.callbacks.ReduceLROnPlateau(),
-    ]
-
-    #Fit the model
-    #history = model.fit(my_generator, validation_data=validation_datagen, steps_per_epoch=len(X_train) // 16, validation_steps=len(X_train) // 16, epochs=100)
-    history = model.fit(X_train, y_train,
-                        batch_size=batch_size,
-                        verbose=1,
-                        callbacks=callbacks,
-                        epochs=40,
-                        validation_data=(X_test, y_test),
-                        #class_weight=class_weights,
-                        shuffle=False)
-
-    # fill with hyperparameter setting
-    model.save('{}_baseline.hdf5'.format(pref))
-
-    with open('{}_trainHistoryDict'.format(pref), 'wb') as file_pi:
-        pickle.dump(history.history, file_pi)
-
-        # plot loss and iou
-    if not kfold:
-        # Plot training & validation iou_score values
-        plt.figure(figsize=(30, 5))
-        plt.subplot(121)
-        plt.plot(history.history['iou_score'])
-        plt.plot(history.history['val_iou_score'])
-        plt.title('Model iou_score')
-        plt.ylabel('iou_score')
-        plt.xlabel('Epoch')
-        plt.legend(['Train', 'Test'], loc='upper left')
-
-        # Plot training & validation loss values
-        plt.subplot(122)
-        plt.plot(history.history['loss'])
-        plt.plot(history.history['val_loss'])
-        plt.title('Model loss')
-        plt.ylabel('Loss')
-        plt.xlabel('Epoch')
-        plt.legend(['Train', 'Test'], loc='upper left')
-
-        plt.savefig(os.path.join('E:/polar/code/data/ir/figures', '{}_iou_loss'.format(pref)))
-
-    return X_train, X_test, y_train, y_test, model
-
-
-################################################################################################
-################################################################################################
-################################################################################################
-
-
-def run_train(X_train, y_train, X_test, y_test,
-              model, pref,
-              backbone='inceptionv3', batch_size=4, 
-              augmentation=None, kfold=False):
+def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='inceptionv3', batch_size=4, 
+              augmentation=None, kfold=False, fold_no=0):
     
     CLASSES=['melt_pond', 'sea_ice']
     BACKBONE = backbone
@@ -175,26 +56,31 @@ def run_train(X_train, y_train, X_test, y_test,
     train_dataloader = Dataloder(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     valid_dataloader = Dataloder(valid_dataset, batch_size=1, shuffle=False)
 
-    # save weights of best performing model in terms of val_loss
+    # save weights of best performing model in terms of minimal val_loss
     callbacks = [
         keras.callbacks.ModelCheckpoint('./weights/best_model{}.h5'.format(pref), save_weights_only=True, save_best_only=True, mode='min'),
         # reduces learning rate when metric has stopped improving
         keras.callbacks.ReduceLROnPlateau(),
+        TimingCallback(),
+        WandbMetricsLogger()
     ]
+
+    print(callbacks[2])
 
     history = model.fit(train_dataloader,
                         verbose=1,
                         callbacks=callbacks,
                         steps_per_epoch=len(train_dataloader), 
-                        epochs=40,  
+                        epochs=2,  
                         validation_data=valid_dataloader, 
                         validation_steps=len(valid_dataloader),
                         shuffle=False)
 
-    if not kfold:
-        # save model scores
-        with open('scores.{}_trainHistoryDict'.format(pref), 'wb') as file_pi:
-            pickle.dump(history.history, file_pi)
+    # save model scores
+    with open('scores.{}_trainHistoryDict'.format(pref), 'wb') as file_pi:
+        pickle.dump(history.history, file_pi)
+
+    time = callbacks[2].logs
     
     if not kfold:
         # Plot training & validation iou_score values
@@ -219,33 +105,33 @@ def run_train(X_train, y_train, X_test, y_test,
         plt.savefig(os.path.join('E:/polar/code/data/ir/figures/final', '{}_iou_loss'.format(pref)))
     
     if kfold:
-        # Generate generalization metrics
+        # generalization metrics
         scores = model.evaluate(valid_dataloader, verbose=0)
     
-        return model, scores
+        return model, scores, time
     
-    return model
+    return model, time
 
 
 
-def train_new(X, y, im_size, pref, backbone='inceptionv3', loss='categoricalCE',
+def train_wrapper(X, y, im_size, base_pref, backbone='inceptionv3', loss='categoricalCE',
               optimizer='Adam', train_transfer=None, encoder_freeze=False,
               batch_size=4, augmentation=None, mode=0, factor=2,
               weight_classes=False, kfold=False, use_dropout=False, use_batchnorm=True):
     
+    masks_resh = y.reshape(-1,1)
+    masks_resh_list = masks_resh.flatten().tolist()
+    class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(masks_resh), y=masks_resh_list)
+    print("Class weights are...:", class_weights)
+
     if weight_classes:
-        masks_resh = y.reshape(-1,1)
-        masks_resh_list = masks_resh.flatten().tolist()
-        class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(masks_resh), y=masks_resh_list)
-        print("Class weights are...:", class_weights)
+        weights = class_weights
     else:
-        class_weights = None
+        weights = None
 
     ################################################################
     
     BACKBONE = backbone
-    LOSS = loss
-    OPTIMIZER = optimizer
     TRAIN_TRANSFER = train_transfer
     AUGMENTATION = augmentation
     BATCH_SIZE = batch_size
@@ -256,28 +142,41 @@ def train_new(X, y, im_size, pref, backbone='inceptionv3', loss='categoricalCE',
     else:
         on_fly = None
 
-    if LOSS == 'jaccard':
-        LOSS = sm.losses.JaccardLoss(class_weights=class_weights)
-    elif LOSS == 'focal_dice':
-        dice_loss = sm.losses.DiceLoss(class_weights=class_weights) 
+    if loss == 'jaccard':
+        LOSS = sm.losses.JaccardLoss(class_weights=weights)
+    elif loss == 'focal_dice':
+        dice_loss = sm.losses.DiceLoss(class_weights=weights) 
         focal_loss = sm.losses.CategoricalFocalLoss()
         LOSS = dice_loss + (1 * focal_loss)
     else:
-        LOSS = sm.losses.CategoricalCELoss(class_weights=class_weights)
+        LOSS = sm.losses.CategoricalCELoss(class_weights=weights)
 
-    if OPTIMIZER == 'Adam':
+    if optimizer == 'Adam':
         OPTIMIZER = keras.optimizers.Adam()
     else:
         print('No optimizer specified')
+
 
     #################################################################
 
     model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER,
                     decoder_use_dropout=use_dropout, decoder_use_batchnorm=use_batchnorm, encoder_freeze=False)
+    
+    mean_iou = sm.metrics.IOUScore(name='mean_iou')
+    weighted_iou = sm.metrics.IOUScore(class_weights=class_weights, name='weighted_iou')
+    f1 = sm.metrics.FScore(beta=1, name='f1')
+    precision = sm.metrics.Precision(name='precision')
+    recall = sm.metrics.Recall(name='recall')
+    melt_pond_iou = sm.metrics.IOUScore(class_indexes=0, name='melt_pond_iou')
+    sea_ice_iou = sm.metrics.IOUScore(class_indexes=1, name='sea_ice_iou')
+    ocean_iou = sm.metrics.IOUScore(class_indexes=2, name='ocean_iou')
+    rounded_iou = sm.metrics.IOUScore(threshold=0.5, name='mean_iou_rounded')
 
     # threshold value in iou metric will round predictions
-    model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[sm.metrics.IOUScore(threshold=0.5)])
+    model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[mean_iou, weighted_iou, tf.keras.metrics.MeanIoU(3, name="iou_keras"), f1, precision, recall, melt_pond_iou,
+                                                           sea_ice_iou, ocean_iou, rounded_iou])
     print(model.summary())
+    print(model.metrics_names)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -290,33 +189,93 @@ def train_new(X, y, im_size, pref, backbone='inceptionv3', loss='categoricalCE',
     print("Test size masks ...", y_test.shape)
 
     if not kfold:
-        model = run_train(X_train, y_train, X_test, y_test, 
+
+        run = wandb.init(project='melt_pond',
+                        group='no_kfold',
+                        name=base_pref,
+                        config={
+                            "loss_function": LOSS,
+                            "batch_size": batch_size,
+                            "backbone": backbone,
+                            "optimizer": OPTIMIZER,
+                            "train_transfer": train_transfer,
+                            "augmentation": AUGMENTATION
+                        })
+        config = wandb.config
+
+        model, time = run_train(X_train, y_train, X_test, y_test, 
                           backbone=BACKBONE, batch_size=BATCH_SIZE,
-                          model=model, augmentation=on_fly, pref=pref)
+                          model=model, augmentation=on_fly, pref=base_pref)
 
-    # 10-crossfold augmentation
+    # 5-crossfold augmentation
     else:
-        num_folds = 10
+        num_folds = 5
 
-        iou_per_fold = []
-        loss_per_fold = []
+        val_loss_per_fold = []
+        val_iou_per_fold = []
+        val_iou_weighted_per_fold = []
+        val_iou_keras_per_fold = []
+        val_f1_per_fold = []
+        val_prec_per_fold = []
+        val_rec_per_fold = []
+        mp_per_class_per_fold = []
+        si_per_class_per_fold = []
+        oc_per_class_per_fold = []
+        rounded_iou_per_fold = []
+
+        time_per_fold = []             
 
         # Merge splitted datasets for cross validation (KFold makes the split)
         X = np.concatenate((X_train, X_test), axis=0)
         y = np.concatenate((y_train, y_test), axis=0)
 
         # Define the K-fold Cross Validator
-        kfold = KFold(n_splits=num_folds, shuffle=True)
+        kfold = KFold(n_splits=num_folds, shuffle=True, random_state=1)
 
         # K-fold Cross Validation model evaluation
         fold_no = 1
-        for train, test in kfold.split(X, y):
-            model, scores = run_train(X[train], y[train], X[test], y[test], model=model, augmentation=on_fly, pref=pref, 
-                                      backbone=BACKBONE, batch_size=BATCH_SIZE, kfold=True)
 
-            print(f'Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]}; {model.metrics_names[1]} of {scores[1]*100}%')
-            iou_per_fold.append(scores[1] * 100)
-            loss_per_fold.append(scores[0])
+        for train, test in kfold.split(X, y):
+            
+            # prefix should contain the fold number
+            pref = base_pref + "_foldn{}".format(fold_no)
+
+            run = wandb.init(project='melt_pond',
+                             group=base_pref,
+                             name='foldn_{}'.format(fold_no),
+                             config={
+                                "loss_function": LOSS,
+                                "batch_size": batch_size,
+                                "backbone": backbone,
+                                "optimizer": OPTIMIZER,
+                                "train_transfer": train_transfer,
+                                "augmentation": AUGMENTATION
+                                }
+            )
+            config = wandb.config
+
+            print("Test set size...", X[test].shape)
+
+            model, scores, time = run_train(X[train], y[train], X[test], y[test], model=model, augmentation=on_fly, pref=pref, 
+                                      backbone=BACKBONE, batch_size=BATCH_SIZE, kfold=True, fold_no=fold_no)
+
+            val_loss_per_fold.append(scores[0])
+            val_iou_per_fold.append(scores[1])
+            val_iou_weighted_per_fold.append(scores[2])
+            val_iou_keras_per_fold.append(scores[3])
+            val_f1_per_fold.append(scores[4])
+            val_prec_per_fold.append(scores[5])
+            val_rec_per_fold.append(scores[6])
+            mp_per_class_per_fold.append(scores[7])
+            si_per_class_per_fold.append(scores[8])
+            oc_per_class_per_fold.append(scores[9])
+            rounded_iou_per_fold.append(scores[10])
+
+            # sum up training time for individual epochs
+            time_per_fold.append(sum(time))
+
+            # close run for that fold
+            wandb.join()
 
             # Increase fold number
             fold_no = fold_no + 1
@@ -324,19 +283,30 @@ def train_new(X, y, im_size, pref, backbone='inceptionv3', loss='categoricalCE',
         # == Provide average scores ==
         print('------------------------------------------------------------------------')
         print('Score per fold')
-        for i in range(0, len(iou_per_fold)):
+        for i in range(0, len(val_iou_per_fold)):
             print('------------------------------------------------------------------------')
-            print(f'> Fold {i+1} - Loss: {loss_per_fold[i]} - IoU: {iou_per_fold[i]}%')
+            print(f'> Fold {i+1} - Loss: {val_loss_per_fold[i]} - IoU: {val_iou_per_fold[i]}%')
         print('------------------------------------------------------------------------')
         print('Average scores for all folds:')
-        print(f'> IoU: {np.mean(iou_per_fold)} (+- {np.std(iou_per_fold)})')
-        print(f'> Loss: {np.mean(loss_per_fold)}')
+        print(f'> IoU: {np.mean(val_iou_per_fold)} (+- {np.std(val_iou_per_fold)})')
+        print(f'> Loss: {np.mean(val_loss_per_fold)}')
         print('------------------------------------------------------------------------')
 
-        iou_per_fold = np.array(iou_per_fold)
-        loss_per_fold = np.array(loss_per_fold)
+        val_iou_per_fold = np.array(val_iou_per_fold)
+        val_loss_per_fold = np.array(val_loss_per_fold)
+        val_iou_weighted_per_fold = np.array(val_iou_weighted_per_fold)
+        val_iou_keras_per_fold = np.array(val_iou_keras_per_fold)
+        val_f1_per_fold = np.array(val_f1_per_fold)
+        val_prec_per_fold = np.array(val_prec_per_fold)
+        val_rec_per_fold = np.array(val_rec_per_fold)
+        mp_per_class_per_fold = np.array(mp_per_class_per_fold)
+        si_per_class_per_fold = np.array(si_per_class_per_fold)
+        oc_per_class_per_fold = np.array(oc_per_class_per_fold)
+        rounded_iou_per_fold = np.array(rounded_iou_per_fold)
 
-        return iou_per_fold, loss_per_fold
+        time_per_fold = np.array(time_per_fold)
+
+        return (val_iou_per_fold, val_loss_per_fold, val_iou_weighted_per_fold, val_iou_keras_per_fold, val_f1_per_fold, val_prec_per_fold, val_rec_per_fold, mp_per_class_per_fold, si_per_class_per_fold, oc_per_class_per_fold, rounded_iou_per_fold), time_per_fold
 
     return X_train, X_test, y_train, y_test, model
 
