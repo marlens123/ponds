@@ -62,11 +62,9 @@ class Dataset:
         mask = np.array(mask)
         #mask = mask.reshape(mask.shape[0], mask.shape[1], 1)
         
-        # extract certain classes from mask
+        # one-hot encoding of masks
         masks = [(mask == v) for v in self.class_values]
         mask = np.stack(masks, axis=-1).astype('float')
-        
-        # add background
         background = 1 - mask.sum(axis=-1, keepdims=True)
         mask = np.concatenate((mask, background), axis=-1)
 
