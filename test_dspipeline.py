@@ -206,5 +206,5 @@ np.save('E:/polar/code/data/ir/prefinal/dropout_ytrain.npy', y_train)
 # encoder freeze
 #X_train, X_test, y_train, y_test, model = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='resnet34', pref='freeze_test', encoder_freeze=True, weight_classes=True)
 
-all_scores, time = train_wrapper(images256, masks256, im_size=256, train_transfer='imagenet', backbone='resnet34', base_pref='kfold_test', kfold=True)
+all_scores, time = train_wrapper(images256, masks256, im_size=256, train_transfer='imagenet', backbone='resnet34', base_pref='kfold_test', kfold=True, use_dropout=True)
 np.save('E:/polar/code/data/ir/final/times.npy', time)
