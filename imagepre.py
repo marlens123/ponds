@@ -29,12 +29,17 @@ class TimingCallback(keras.callbacks.Callback):
         self.logs.append(timer()-self.starttime)
 
 
-def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='inceptionv3', batch_size=4, 
-              augmentation=None, kfold=False, fold_no=0):
+def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='inceptionv3', batch_size=4, weight_classes=False,
+              class_weights=None, loss='categoricalCE', optimizer='Adam', augmentation=None, kfold=False, fold_no=0):
     
     CLASSES=['melt_pond', 'sea_ice']
     BACKBONE = backbone
     BATCH_SIZE = batch_size
+
+    if weight_classes:
+        weights = class_weights
+    else:
+        weights = None
     
     # Dataset for train images
     train_dataset = Dataset(
@@ -56,16 +61,48 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='inception
     train_dataloader = Dataloder(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     valid_dataloader = Dataloder(valid_dataset, batch_size=1, shuffle=False)
 
+    if loss == 'jaccard':
+        LOSS = sm.losses.JaccardLoss(class_weights=weights)
+    elif loss == 'focal_dice':
+        dice_loss = sm.losses.DiceLoss(class_weights=weights) 
+        focal_loss = sm.losses.CategoricalFocalLoss()
+        LOSS = dice_loss + (1 * focal_loss)
+    elif loss == 'categoricalCE':
+        LOSS = sm.losses.CategoricalCELoss(class_weights=weights)
+    else:
+        print('No loss function specified')
+
+    if optimizer == 'Adam':
+        OPTIMIZER = keras.optimizers.Adam()
+    elif optimizer == 'SGD':
+        OPTIMIZER = keras.optimizer.SGD()
+    elif optimizer == 'Adamax':
+        OPTIMIZER = keras.optimizer.Adamax()
+    else:
+        print('No optimizer specified')
+
+    mean_iou = sm.metrics.IOUScore(name='mean_iou')
+    weighted_iou = sm.metrics.IOUScore(class_weights=class_weights, name='weighted_iou')
+    f1 = sm.metrics.FScore(beta=1, name='f1')
+    precision = sm.metrics.Precision(name='precision')
+    recall = sm.metrics.Recall(name='recall')
+    melt_pond_iou = sm.metrics.IOUScore(class_indexes=0, name='melt_pond_iou')
+    sea_ice_iou = sm.metrics.IOUScore(class_indexes=1, name='sea_ice_iou')
+    ocean_iou = sm.metrics.IOUScore(class_indexes=2, name='ocean_iou')
+    rounded_iou = sm.metrics.IOUScore(threshold=0.5, name='mean_iou_rounded')
+
+    # threshold value in iou metric will round predictions
+    model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[mean_iou, weighted_iou, tf.keras.metrics.MeanIoU(3, name="iou_keras"), f1, precision, recall, melt_pond_iou,
+                                                           sea_ice_iou, ocean_iou, rounded_iou])
+
     # save weights of best performing model in terms of minimal val_loss
     callbacks = [
         keras.callbacks.ModelCheckpoint('./weights/best_model{}.h5'.format(pref), save_weights_only=True, save_best_only=True, mode='min'),
         # reduces learning rate when metric has stopped improving
-        keras.callbacks.ReduceLROnPlateau(),
+        # keras.callbacks.ReduceLROnPlateau(),
         TimingCallback(),
         WandbMetricsLogger()
     ]
-
-    print(callbacks[2])
 
     history = model.fit(train_dataloader,
                         verbose=1,
@@ -77,10 +114,10 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='inception
                         shuffle=False)
 
     # save model scores
-    with open('scores.{}_trainHistoryDict'.format(pref), 'wb') as file_pi:
+    with open('./scores/{}_trainHistoryDict'.format(pref), 'wb') as file_pi:
         pickle.dump(history.history, file_pi)
 
-    time = callbacks[2].logs
+    time = callbacks[1].logs
     
     if not kfold:
         # Plot training & validation iou_score values
@@ -124,11 +161,6 @@ def train_wrapper(X, y, im_size, base_pref, backbone='inceptionv3', loss='catego
     class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(masks_resh), y=masks_resh_list)
     print("Class weights are...:", class_weights)
 
-    if weight_classes:
-        weights = class_weights
-    else:
-        weights = None
-
     ################################################################
     
     BACKBONE = backbone
@@ -142,41 +174,12 @@ def train_wrapper(X, y, im_size, base_pref, backbone='inceptionv3', loss='catego
     else:
         on_fly = None
 
-    if loss == 'jaccard':
-        LOSS = sm.losses.JaccardLoss(class_weights=weights)
-    elif loss == 'focal_dice':
-        dice_loss = sm.losses.DiceLoss(class_weights=weights) 
-        focal_loss = sm.losses.CategoricalFocalLoss()
-        LOSS = dice_loss + (1 * focal_loss)
-    else:
-        LOSS = sm.losses.CategoricalCELoss(class_weights=weights)
-
-    if optimizer == 'Adam':
-        OPTIMIZER = keras.optimizers.Adam()
-    else:
-        print('No optimizer specified')
-
-
     #################################################################
 
     model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER,
-                    decoder_use_dropout=use_dropout, decoder_use_batchnorm=use_batchnorm, encoder_freeze=False)
-    
-    mean_iou = sm.metrics.IOUScore(name='mean_iou')
-    weighted_iou = sm.metrics.IOUScore(class_weights=class_weights, name='weighted_iou')
-    f1 = sm.metrics.FScore(beta=1, name='f1')
-    precision = sm.metrics.Precision(name='precision')
-    recall = sm.metrics.Recall(name='recall')
-    melt_pond_iou = sm.metrics.IOUScore(class_indexes=0, name='melt_pond_iou')
-    sea_ice_iou = sm.metrics.IOUScore(class_indexes=1, name='sea_ice_iou')
-    ocean_iou = sm.metrics.IOUScore(class_indexes=2, name='ocean_iou')
-    rounded_iou = sm.metrics.IOUScore(threshold=0.5, name='mean_iou_rounded')
+                    decoder_use_dropout=use_dropout, decoder_use_batchnorm=use_batchnorm, encoder_freeze=False)  
 
-    # threshold value in iou metric will round predictions
-    model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[mean_iou, weighted_iou, tf.keras.metrics.MeanIoU(3, name="iou_keras"), f1, precision, recall, melt_pond_iou,
-                                                           sea_ice_iou, ocean_iou, rounded_iou])
     print(model.summary())
-    print(model.metrics_names)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -194,18 +197,18 @@ def train_wrapper(X, y, im_size, base_pref, backbone='inceptionv3', loss='catego
                         group='no_kfold',
                         name=base_pref,
                         config={
-                            "loss_function": LOSS,
+                            "loss_function": loss,
                             "batch_size": batch_size,
                             "backbone": backbone,
-                            "optimizer": OPTIMIZER,
+                            "optimizer": optimizer,
                             "train_transfer": train_transfer,
                             "augmentation": AUGMENTATION
                         })
         config = wandb.config
 
         model, time = run_train(X_train, y_train, X_test, y_test, 
-                          backbone=BACKBONE, batch_size=BATCH_SIZE,
-                          model=model, augmentation=on_fly, pref=base_pref)
+                          backbone=BACKBONE, batch_size=BATCH_SIZE, optimizer=optimizer, loss=loss, class_weights=class_weights,
+                          model=model, augmentation=on_fly, pref=base_pref, weight_classes=weight_classes)
 
     # 5-crossfold augmentation
     else:
@@ -244,10 +247,10 @@ def train_wrapper(X, y, im_size, base_pref, backbone='inceptionv3', loss='catego
                              group=base_pref,
                              name='foldn_{}'.format(fold_no),
                              config={
-                                "loss_function": LOSS,
+                                "loss_function": loss,
                                 "batch_size": batch_size,
                                 "backbone": backbone,
-                                "optimizer": OPTIMIZER,
+                                "optimizer": optimizer,
                                 "train_transfer": train_transfer,
                                 "augmentation": AUGMENTATION
                                 }
@@ -256,8 +259,8 @@ def train_wrapper(X, y, im_size, base_pref, backbone='inceptionv3', loss='catego
 
             print("Test set size...", X[test].shape)
 
-            model, scores, time = run_train(X[train], y[train], X[test], y[test], model=model, augmentation=on_fly, pref=pref, 
-                                      backbone=BACKBONE, batch_size=BATCH_SIZE, kfold=True, fold_no=fold_no)
+            model, scores, time = run_train(X[train], y[train], X[test], y[test], model=model, augmentation=on_fly, pref=pref, weight_classes=weight_classes,
+                                      backbone=BACKBONE, batch_size=BATCH_SIZE, kfold=True, fold_no=fold_no, optimizer=optimizer, loss=loss, class_weights=class_weights)
 
             val_loss_per_fold.append(scores[0])
             val_iou_per_fold.append(scores[1])
