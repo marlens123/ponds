@@ -210,7 +210,8 @@ def train_wrapper(X, y, im_size, base_pref, backbone='inceptionv3', loss='catego
                           backbone=BACKBONE, batch_size=BATCH_SIZE, optimizer=optimizer, loss=loss, class_weights=class_weights,
                           model=model, augmentation=on_fly, pref=base_pref, weight_classes=weight_classes)
 
-    # 5-crossfold augmentation
+    # 5-crossfold augmentation: https://www.kaggle.com/code/ayuraj/efficientnet-mixup-k-fold-using-tf-and-wandb/notebook
+    # (inspiration kfold, wanbd)
     else:
         num_folds = 5
 

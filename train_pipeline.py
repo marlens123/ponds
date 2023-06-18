@@ -71,6 +71,7 @@ _, timefocal = train_wrapper(images256, masks256, im_size=256, train_transfer='i
 ### smaller learning rate
 ### encoder freeze half
 ### different optimizer
+### normalization
 
 
 times = [time32, time64, time128, time256, time480, timedropout, timefocal, timefreeze, timemode0, timemode2, timemode3, timemode4,
