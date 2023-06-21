@@ -1,7 +1,13 @@
 import numpy as np
-from imagepre import train_wrapper
+from train import train_wrapper
 import cv2
 import os
+
+
+images = np.load('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_im.npy')
+masks = np.load('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_ma.npy')
+
+###################################################################################
 
 images32 = np.load('E:/polar/code/data/ir/entire/original_size/ims_raw_np/32_im.npy')
 masks32 = np.load('E:/polar/code/data/ir/entire/original_size/ims_raw_np/32_ma.npy')
@@ -17,6 +23,8 @@ masks256 = np.load('E:/polar/code/data/ir/entire/original_size/ims_raw_np/256_ma
 
 images480 = np.load('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_im.npy')
 masks480 = np.load('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_ma.npy')
+
+#####################################################################################
 
 ### 32
 _, time32 = train_wrapper(images32, masks32, im_size=32, backbone='resnet34', train_transfer='imagenet', base_pref='baseline_32', kfold=True)
@@ -68,10 +76,10 @@ _, timeweighted = train_wrapper(images256, masks256, im_size=256, train_transfer
 _, timefocal = train_wrapper(images256, masks256, im_size=256, train_transfer='imagenet', backbone='resnet34', weight_classes=True, loss='focal_dice', base_pref='focal_dice', kfold=True)
 
 
+### train with temperature values
 ### smaller learning rate
-### encoder freeze half
+### combine encoder freeze and fine-tuning
 ### different optimizer
-### normalization
 
 
 times = [time32, time64, time128, time256, time480, timedropout, timefocal, timefreeze, timemode0, timemode2, timemode3, timemode4,

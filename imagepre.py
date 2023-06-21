@@ -30,7 +30,7 @@ class TimingCallback(keras.callbacks.Callback):
 
 
 def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='inceptionv3', batch_size=4, weight_classes=False,
-              class_weights=None, loss='categoricalCE', optimizer='Adam', augmentation=None, kfold=False, fold_no=0):
+              class_weights=None, loss='categoricalCE', optimizer='Adam', augmentation=None, kfold=False, fold_no=0, epochs=100):
     
     CLASSES=['melt_pond', 'sea_ice']
     BACKBONE = backbone
@@ -108,7 +108,7 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='inception
                         verbose=1,
                         callbacks=callbacks,
                         steps_per_epoch=len(train_dataloader), 
-                        epochs=100,  
+                        epochs=epochs,  
                         validation_data=valid_dataloader, 
                         validation_steps=len(valid_dataloader),
                         shuffle=False)
@@ -153,13 +153,9 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='inception
 
 def train_wrapper(X, y, im_size, base_pref, backbone='inceptionv3', loss='categoricalCE',
               optimizer='Adam', train_transfer=None, encoder_freeze=False,
-              batch_size=4, augmentation=None, mode=0, factor=2,
+              batch_size=4, augmentation=None, mode=0, factor=2, epochs=100,
               weight_classes=False, kfold=False, use_dropout=False, use_batchnorm=True):
-    
-    masks_resh = y.reshape(-1,1)
-    masks_resh_list = masks_resh.flatten().tolist()
-    class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(masks_resh), y=masks_resh_list)
-    print("Class weights are...:", class_weights)
+
 
     ################################################################
     
@@ -182,6 +178,12 @@ def train_wrapper(X, y, im_size, base_pref, backbone='inceptionv3', loss='catego
     print(model.summary())
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # compute class weights
+    masks_resh = y_train.reshape(-1,1)
+    masks_resh_list = masks_resh.flatten().tolist()
+    class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(masks_resh), y=masks_resh_list)
+    print("Class weights are...:", class_weights)
 
     if AUGMENTATION == 'offline':
         X_train, y_train = offline_augmentation(X_train, y_train, im_size=im_size, mode=mode, factor=factor)
@@ -206,7 +208,7 @@ def train_wrapper(X, y, im_size, base_pref, backbone='inceptionv3', loss='catego
                         })
         config = wandb.config
 
-        model, time = run_train(X_train, y_train, X_test, y_test, 
+        model, time = run_train(X_train, y_train, X_test, y_test, epochs=epochs,
                           backbone=BACKBONE, batch_size=BATCH_SIZE, optimizer=optimizer, loss=loss, class_weights=class_weights,
                           model=model, augmentation=on_fly, pref=base_pref, weight_classes=weight_classes)
 
@@ -260,7 +262,7 @@ def train_wrapper(X, y, im_size, base_pref, backbone='inceptionv3', loss='catego
 
             print("Test set size...", X[test].shape)
 
-            model, scores, time = run_train(X[train], y[train], X[test], y[test], model=model, augmentation=on_fly, pref=pref, weight_classes=weight_classes,
+            model, scores, time = run_train(X[train], y[train], X[test], y[test], model=model, augmentation=on_fly, pref=pref, weight_classes=weight_classes, epochs=epochs,
                                       backbone=BACKBONE, batch_size=BATCH_SIZE, kfold=True, fold_no=fold_no, optimizer=optimizer, loss=loss, class_weights=class_weights)
 
             val_loss_per_fold.append(scores[0])

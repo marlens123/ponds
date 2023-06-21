@@ -46,6 +46,7 @@ np.save('E:/polar/code/data/ir/entire/original_size/prepared/480_ma.npy', masks)
 ############### Create Patches ################
 
 def patch_extraction(imgs, masks, size, step):
+
     img_patches = []
     for img in imgs:     
         patches_img = patchify(img, (size, size), step=step)
