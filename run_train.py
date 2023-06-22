@@ -10,32 +10,32 @@ masks = np.load('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_ma.np
 
 
 ### inceptionv3
-_, time256 = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='inceptionv3', base_pref='inceptionv3', kfold=True)
-times.append(time256)
+_, timeincep = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='inceptionv3', base_pref='inceptionv3', kfold=True)
+times.append(timeincep)
 
 
 ### vgg19
-_, time256 = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='vgg19', base_pref='vgg19', kfold=True)
-times.append(time256)
+_, timevgg = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='vgg19', base_pref='vgg19', kfold=True)
+times.append(timevgg)
 
 
 ### 32
-_, time32 = train_wrapper(images, masks, im_size=32, backbone='resnet34', train_transfer='imagenet', base_pref='baseline_32', kfold=True)
+_, time32 = train_wrapper(images, masks, im_size=32, batch_size=32, backbone='resnet34', train_transfer='imagenet', base_pref='baseline_32', kfold=True)
 times.append(time32)
 
 
 ### 64
-_, time64 = train_wrapper(images, masks, im_size=64, backbone='resnet34', train_transfer='imagenet', base_pref='baseline_64', kfold=True)
+_, time64 = train_wrapper(images, masks, im_size=64, batch_size=16, backbone='resnet34', train_transfer='imagenet', base_pref='baseline_64', kfold=True)
 times.append(time64)
 
 
 ### 128
-_, time128 = train_wrapper(images, masks, im_size=128, backbone='resnet34', train_transfer='imagenet', base_pref='baseline_128', kfold=True)
+_, time128 = train_wrapper(images, masks, im_size=128, batch_size=8, backbone='resnet34', train_transfer='imagenet', base_pref='baseline_128', kfold=True)
 times.append(time128)
 
 
 ### 256 (baseline)
-_, time256 = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='resnet34', base_pref='baseline_256', kfold=True)
+_, time256 = train_wrapper(images, masks, im_size=256, batch_size=4, train_transfer='imagenet', backbone='resnet34', base_pref='baseline_256', kfold=True)
 times.append(time256)
 
 
@@ -111,3 +111,21 @@ times.append(timejaccard)
 
 times = np.array(times)
 np.save('E:/polar/code/data/ir/final/times_final.npy', times)
+
+
+
+######################################################################################
+### Still to run modes
+######################################################################################
+
+images_norm = np.load('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_im_norm.npy')
+
+# normalized
+_, timenorm = train_wrapper(images_norm, masks, im_size=256, batch_size=4, train_transfer='imagenet', backbone='resnet34', base_pref='norm_v_256', kfold=True)
+
+# other normalization from scratch
+_, timen = train_wrapper(images, masks, epochs=50, im_size=256, input_normalize=True, train_transfer='imagenet', backbone='resnet34', base_pref='norm_scratch', kfold=True)
+
+# using other patch extraction function
+# normalized
+_, timepatch = train_wrapper(images, masks, im_size=256, batch_size=4, random_patch=False, train_transfer='imagenet', backbone='resnet34', base_pref='other_patch', kfold=True)

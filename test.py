@@ -28,4 +28,4 @@ masks480 = np.load('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_ma
 
 ### 256 (baseline)
 #_, time256 = train_wrapper(images, masks, epochs=50, im_size=256, input_normalize=True, train_transfer='imagenet', backbone='resnet34', base_pref='test_norm', kfold=True)
-_, time256 = train_wrapper(images, masks, epochs=100, im_size=256, train_transfer='imagenet', backbone='resnet34', base_pref='test', kfold=True)
+_, time256 = train_wrapper(images, masks, epochs=100, im_size=256, train_transfer='imagenet', backbone='resnet34', base_pref='test_offline', augmentation='offline', kfold=True)

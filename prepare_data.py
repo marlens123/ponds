@@ -22,9 +22,17 @@ tmp = []
 
 for im in imgs_train:
     im = crop_center_square(im)
-    im.append(tmp)
+    tmp.append(im)
 
 imgs_train = tmp
+
+for idx, img in enumerate(imgs_train):
+    plt.imsave('E:/polar/code/data/ir/entire/original_size/ims_raw_normalize/{}.png'.format(idx), img, cmap='gray', 
+               vmin=273, vmax=277)
+    
+for idx, img in enumerate(imgs_train):
+    plt.imsave('E:/polar/code/data/ir/entire/original_size/ims_raw/{}.png'.format(idx), img, cmap='gray')
+
 
 masks_train = []
 for f in os.listdir(mask_dir):
@@ -77,6 +85,9 @@ patches_32 = patch_extraction(imgs_train, masks_train, size=32, step=32) # no ov
 imgs_png = []
 save_path = 'E:/polar/code/data/ir/entire/original_size/ims_raw/'
 
+imgs_png_norm = []
+save_path_norm = 'E:/polar/code/data/ir/entire/original_size/ims_raw_normalize/'
+
 for im in os.listdir(save_path):
     path = os.path.join(save_path, im)
     im = cv2.imread(path, 0)
@@ -84,12 +95,24 @@ for im in os.listdir(save_path):
 
     imgs_png.append(im)
 
+for im in os.listdir(save_path_norm):
+    path = os.path.join(save_path_norm, im)
+    im = cv2.imread(path, 0)
+    im = crop_center_square(im)
+
+    imgs_png_norm.append(im)
+
 imgs_raw = np.array(imgs_png)
 masks_raw = np.array(masks_train)
+
+imgs_raw_norm = np.array(imgs_png_norm)
 
 # save 480 array
 np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_im.npy', imgs_raw)
 np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_ma.npy', masks_raw)
+
+# save normalized images as array
+np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_im_norm.npy', imgs_raw_norm)
 
 patches_256_raw = patch_extraction(imgs_png, masks_train, size=256, step=224) # step 224 means that there will be overlap
 patches_128_raw = patch_extraction(imgs_png, masks_train, size=128, step=160) # step 120 means that there will be overlap

@@ -158,7 +158,7 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
 
 def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoricalCE',
               optimizer='Adam', train_transfer=None, encoder_freeze=False, input_normalize=False,
-              batch_size=4, augmentation=None, mode=0, factor=2, epochs=100,
+              batch_size=4, augmentation=None, mode=0, factor=2, epochs=100, random_patch=True,
               weight_classes=False, kfold=False, use_dropout=False, use_batchnorm=True):
 
     ################################################################
@@ -247,12 +247,15 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
             
             # 5 random patches per image
             elif im_size==256:
-                X_train, y_train = patch_extraction(X[train], y[train], size=256, step=224)
-                X_test, y_test = patch_extraction(X[test], y[test], size=256, step=224)
+                if random_patch:
+                    X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=5, patch_size=256)
+                    X_test, y_test = patch_pipeline(X[test], y[test], nr_patches=5, patch_size=256)
+
+                else:
+                    X_train, y_train = patch_extraction(X[train], y[train], size=256, step=224)
+                    X_test, y_test = patch_extraction(X[test], y[test], size=256, step=224)
 
 
-                #X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=5, patch_size=256)
-                #X_test, y_test = patch_pipeline(X[test], y[test], nr_patches=5, patch_size=256)
 
             print("Train size after patch extraction...", X_train.shape)
             print("Test size after patch extraction...", X_test.shape)
