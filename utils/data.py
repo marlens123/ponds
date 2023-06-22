@@ -37,6 +37,7 @@ class Dataset:
             classes=None,
             augmentation=None, 
             preprocessing=None,
+            normalize=False,
     ):
         #self.ids = images.tolist()
         self.images_fps = images.tolist()
@@ -45,6 +46,8 @@ class Dataset:
         # convert str names to class values on masks
         self.class_values = [self.CLASSES.index(cls.lower()) for cls in classes]
         
+        self.normalize = normalize
+
         self.augmentation = augmentation
         self.preprocessing = preprocessing
     
@@ -55,8 +58,6 @@ class Dataset:
         image = np.array(image)
         # reshape to 3 dims in last channel
         image = expand_greyscale_channels(image)
-
-        print(image.shape)
 
         mask = self.masks_fps[i]
         mask = np.array(mask)
@@ -74,6 +75,11 @@ class Dataset:
         image = image.astype(np.float32)
         mask = mask.astype(np.float32)
 
+        print("Image shape before normalization...", image.shape)
+        if self.normalize:
+            image = image / 255
+        print("Image shape after normalization...", image.shape)
+
         # apply augmentations
         if self.augmentation:
             sample = self.augmentation(image=image, mask=mask)
@@ -83,8 +89,6 @@ class Dataset:
         if self.preprocessing:
             sample = self.preprocessing(image=image, mask=mask)
             image, mask = sample['image'], sample['mask']
-
-
 
         print("Shape image: {}".format(image.shape))
         print("Shape mask: {}".format(mask.shape))

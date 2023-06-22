@@ -76,14 +76,6 @@ def get_training_augmentation(im_size, mode=0):
             A.VerticalFlip(),
             A.RandomSizedCrop(min_max_height=[int(0.5*im_size), int(0.8*im_size)], height=im_size, width=im_size, interpolation=0, p=0.5),
             A.Rotate(interpolation=0),
-            A.OneOf(
-                [
-                    A.Sharpen(p=1),
-                    A.Blur(p=1),
-                    A.MotionBlur(p=1),
-                ],
-                p=0.5,
-            ),
             A.GaussNoise(),
         ]
         return A.Compose(train_transform)
