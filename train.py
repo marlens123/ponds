@@ -158,7 +158,7 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
 
 def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoricalCE',
               optimizer='Adam', train_transfer=None, encoder_freeze=False, input_normalize=False,
-              batch_size=4, augmentation=None, mode=0, factor=2, epochs=100, random_patch=True,
+              batch_size=4, augmentation=None, mode=0, factor=2, epochs=100, patch_mode='random_random',
               weight_classes=False, kfold=False, use_dropout=False, use_batchnorm=True):
 
     ################################################################
@@ -232,29 +232,78 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
 
             # 320 random patches per image
             if im_size==32:
-                X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=320, patch_size=32)
-                X_test, y_test = patch_pipeline(X[test], y[test], nr_patches=320, patch_size=32)
+                if patch_mode=='random_random':
+                    X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=320, patch_size=32)
+                    X_test, y_test = patch_pipeline(X[test], y[test], nr_patches=320, patch_size=32)
+
+                elif patch_mode=='random_slide':
+                    X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=320, patch_size=32)
+                    X_test, y_test = patch_extraction(X[test], y[test], size=32, step=32)
+
+                elif patch_mode=='slide_slide':
+                    X_train, y_train = patch_extraction(X[train], y[train], size=32, step=32)
+                    X_test, y_test = patch_extraction(X[test], y[test], size=32, step=32)
+
+                else:
+                    'Patch mode must be one of "random_random", "random_slide", "slide_slide"'
             
             # 80 random patches per image
             elif im_size==64:
-                X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=80, patch_size=64)
-                X_test, y_test = patch_pipeline(X[test], y[test], nr_patches=80, patch_size=64)
+                if patch_mode=='random_random':
+                    X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=80, patch_size=64)
+                    X_test, y_test = patch_pipeline(X[test], y[test], nr_patches=80, patch_size=64)
+
+                elif patch_mode=='random_slide':
+                    X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=80, patch_size=64)
+                    X_test, y_test = patch_extraction(X[test], y[test], size=64, step=68)
+
+                elif patch_mode=='slide_slide':
+                    X_train, y_train = patch_extraction(X[train], y[train], size=64, step=68)
+                    X_test, y_test = patch_extraction(X[test], y[test], size=64, step=68)
+
+                else:
+                    'Patch mode must be one of "random_random", "random_slide", "slide_slide"'
             
             # 20 random patches per image
             elif im_size==128:
-                X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=20, patch_size=128)
-                X_test, y_test = patch_pipeline(X[test], y[test], nr_patches=20, patch_size=128)
+                if patch_mode=='random_random': 
+                    X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=20, patch_size=128)
+                    X_test, y_test = patch_pipeline(X[test], y[test], nr_patches=20, patch_size=128)
+
+                elif patch_mode=='random_slide':
+                    X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=20, patch_size=128)
+                    X_test, y_test = patch_extraction(X[test], y[test], size=128, step=160)
+
+                elif patch_mode=='slide_slide':
+                    X_train, y_train = patch_extraction(X[train], y[train], size=128, step=160)
+                    X_test, y_test = patch_extraction(X[test], y[test], size=128, step=160)
+
+                else:
+                    'Patch mode must be one of "random_random", "random_slide", "slide_slide"'
             
             # 5 random patches per image
             elif im_size==256:
-                if random_patch:
+                if patch_mode=='random_random':
                     X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=5, patch_size=256)
                     X_test, y_test = patch_pipeline(X[test], y[test], nr_patches=5, patch_size=256)
 
-                else:
+                elif patch_mode=='random_slide':
+                    X_train, y_train = patch_pipeline(X[train], y[train], nr_patches=5, patch_size=256)
+                    X_test, y_test = patch_extraction(X[test], y[test], size=256, step=224)
+
+                elif patch_mode=='slide_slide':
                     X_train, y_train = patch_extraction(X[train], y[train], size=256, step=224)
                     X_test, y_test = patch_extraction(X[test], y[test], size=256, step=224)
 
+                else:
+                    'Patch mode must be one of "random_random", "random_slide", "slide_slide"'
+
+            # no patch extraction
+            elif im_size==480:
+                X_train = X[train]
+                y_train = y[train]
+                X_test = X[test]
+                y_test = y[test]
 
 
             print("Train size after patch extraction...", X_train.shape)

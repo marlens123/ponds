@@ -1,3 +1,16 @@
+
+
+# Credit Example
+
+# MIT License
+# Copyright (c) 2017 Vooban Inc.
+# Coded by: Guillaume Chevalier
+# Source to original code and license:
+#   source url
+
+
+
+
 import numpy as np
 from train import train_wrapper
 import cv2
