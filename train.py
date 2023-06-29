@@ -86,7 +86,6 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
 
     mean_iou = sm.metrics.IOUScore(name='mean_iou')
     weighted_iou = sm.metrics.IOUScore(class_weights=class_weights, name='weighted_iou')
-    keras_iou = tf.keras.metrics.MeanIoU(3, name="iou_keras")
     f1 = sm.metrics.FScore(beta=1, name='f1')
     precision = sm.metrics.Precision(name='precision')
     recall = sm.metrics.Recall(name='recall')
@@ -97,7 +96,7 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
 
 
     # threshold value in iou metric will round predictions
-    model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[mean_iou, weighted_iou, keras_iou, f1, precision, recall, melt_pond_iou,
+    model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[mean_iou, weighted_iou, f1, precision, recall, melt_pond_iou,
                                                            sea_ice_iou, ocean_iou, rounded_iou])
 
     # save weights of best performing model in terms of minimal val_loss
@@ -158,7 +157,7 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
 
 def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoricalCE',
               optimizer='Adam', train_transfer=None, encoder_freeze=False, input_normalize=False,
-              batch_size=4, augmentation=None, mode=0, factor=2, epochs=100, patch_mode='random_random',
+              batch_size=4, augmentation=None, mode=0, factor=2, epochs=50, patch_mode='slide_slide',
               weight_classes=False, kfold=False, use_dropout=False, use_batchnorm=True):
 
     ################################################################
@@ -179,7 +178,7 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
     model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER,
                     decoder_use_dropout=use_dropout, decoder_use_batchnorm=use_batchnorm, encoder_freeze=encoder_freeze)  
 
-    #print(model.summary())
+    print(model.summary())
 
 
     if kfold:
@@ -190,7 +189,6 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
         val_loss_per_fold = []
         val_iou_per_fold = []
         val_iou_weighted_per_fold = []
-        val_iou_keras_per_fold = []
         val_f1_per_fold = []
         val_prec_per_fold = []
         val_rec_per_fold = []
@@ -220,7 +218,7 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
             ############## Class Weights #############
             ##########################################
 
-            # compute class weights
+            # compute class weights after split 
             masks_resh = y[train].reshape(-1,1)
             masks_resh_list = masks_resh.flatten().tolist()
             class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(masks_resh), y=masks_resh_list)
@@ -325,7 +323,7 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
             ############# Tracking Config ############
             ##########################################
 
-            run = wandb.init(project='melt_pond',
+            run = wandb.init(project='pond',
                              group=base_pref,
                              name='foldn_{}'.format(fold_no),
                              config={
@@ -352,14 +350,13 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
             val_loss_per_fold.append(scores[0])
             val_iou_per_fold.append(scores[1])
             val_iou_weighted_per_fold.append(scores[2])
-            val_iou_keras_per_fold.append(scores[3])
-            val_f1_per_fold.append(scores[4])
-            val_prec_per_fold.append(scores[5])
-            val_rec_per_fold.append(scores[6])
-            mp_per_class_per_fold.append(scores[7])
-            si_per_class_per_fold.append(scores[8])
-            oc_per_class_per_fold.append(scores[9])
-            rounded_iou_per_fold.append(scores[10])
+            val_f1_per_fold.append(scores[3])
+            val_prec_per_fold.append(scores[4])
+            val_rec_per_fold.append(scores[5])
+            mp_per_class_per_fold.append(scores[6])
+            si_per_class_per_fold.append(scores[7])
+            oc_per_class_per_fold.append(scores[8])
+            rounded_iou_per_fold.append(scores[9])
 
             # sum up training time for individual epochs
             time_per_fold.append(sum(time))
@@ -385,7 +382,6 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
         val_iou_per_fold = np.array(val_iou_per_fold)
         val_loss_per_fold = np.array(val_loss_per_fold)
         val_iou_weighted_per_fold = np.array(val_iou_weighted_per_fold)
-        val_iou_keras_per_fold = np.array(val_iou_keras_per_fold)
         val_f1_per_fold = np.array(val_f1_per_fold)
         val_prec_per_fold = np.array(val_prec_per_fold)
         val_rec_per_fold = np.array(val_rec_per_fold)
@@ -396,5 +392,5 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
 
         time_per_fold = np.array(time_per_fold)
 
-    return (val_iou_per_fold, val_loss_per_fold, val_iou_weighted_per_fold, val_iou_keras_per_fold, val_f1_per_fold, val_prec_per_fold, val_rec_per_fold, mp_per_class_per_fold, si_per_class_per_fold, oc_per_class_per_fold, rounded_iou_per_fold), time_per_fold
+    return (val_iou_per_fold, val_loss_per_fold, val_iou_weighted_per_fold, val_f1_per_fold, val_prec_per_fold, val_rec_per_fold, mp_per_class_per_fold, si_per_class_per_fold, oc_per_class_per_fold, rounded_iou_per_fold), time_per_fold
 

@@ -9,8 +9,6 @@
 #   source url
 
 
-
-
 import numpy as np
 from train import train_wrapper
 import cv2
@@ -22,14 +20,40 @@ images = np.load('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_im.n
 masks = np.load('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_ma.npy')
 
 
+###################################################################################
+############### Test different backbones ##########################################
+###################################################################################
+
+
 ### inceptionv3
 _, timeincep = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='inceptionv3', base_pref='inceptionv3', kfold=True)
 times.append(timeincep)
 
-
 ### vgg19
 _, timevgg = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='vgg19', base_pref='vgg19', kfold=True)
 times.append(timevgg)
+
+### resnet34
+_, timeres = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='resnet34', base_pref='resnet34', kfold=True)
+times.append(timeres)
+
+# same runs for more epochs
+### inceptionv3
+_, timeincep_long = train_wrapper(images, masks, epochs=100, im_size=256, train_transfer='imagenet', backbone='inceptionv3', base_pref='inceptionv3_long', kfold=True)
+times.append(timeincep_long)
+
+### vgg19
+_, timevgg_long = train_wrapper(images, masks, epochs=100, im_size=256, train_transfer='imagenet', backbone='vgg19', base_pref='vgg19_long', kfold=True)
+times.append(timevgg_long)
+
+### resnet34
+_, timeres_long = train_wrapper(images, masks, epochs=100, im_size=256, train_transfer='imagenet', backbone='resnet34', base_pref='resnet34_long', kfold=True)
+times.append(timeres_long)
+
+
+###################################################################################
+############### Different patch sizes #############################################
+###################################################################################
 
 
 ### 32
@@ -55,6 +79,10 @@ times.append(time256)
 ### 480: Smaller batch size because less images
 _, time480 = train_wrapper(images, masks, im_size=480, batch_size=2, train_transfer='imagenet', backbone='resnet34', base_pref='baseline_480', kfold=True)
 times.append(time480)
+
+######################################################################################
+############### Test Augmentation ####################################################
+######################################################################################
 
 
 ### augmentation mode 0
@@ -85,6 +113,10 @@ times.append(timemode4)
 ### offline augmentation *10
 ### offline augmenation *20
 
+#######################################################################################
+############ Pretraining Methods ######################################################
+#######################################################################################
+
 ### train from scratch
 _, timescratch = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='resnet34', base_pref='scratch', kfold=True)
 times.append(timescratch)
@@ -94,11 +126,17 @@ times.append(timescratch)
 _, timefreeze = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='resnet34', base_pref='freeze', kfold=True, encoder_freeze=True)
 times.append(timefreeze)
 
+########################################################################################
+############ Dropout ###################################################################
+########################################################################################
 
 ### with dropout
 _, timedropout = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='resnet34', base_pref='dropout', kfold=True, use_dropout=True)
 times.append(timedropout)
 
+#######################################################################################
+########### Loss Functions (Class Imbalance) ##########################################
+#######################################################################################
 
 ### weighted loss function
 _, timeweighted = train_wrapper(images, masks, im_size=256, train_transfer='imagenet', backbone='resnet34', base_pref='weighted_loss', kfold=True, weight_classes=True)
@@ -117,6 +155,7 @@ times.append(timejaccard)
 
 ### train with temperature values from scratch
 ### train with normalization from scratch
+
 ### smaller learning rate
 ### combine encoder freeze and fine-tuning: https://keras.io/guides/transfer_learning/
 ### different optimizer
