@@ -51,6 +51,53 @@ masks = np.array(masks_train)
 np.save('E:/polar/code/data/ir/entire/original_size/prepared/480_im.npy', imgs)
 np.save('E:/polar/code/data/ir/entire/original_size/prepared/480_ma.npy', masks)
 
+
+############### Test Data #####################
+
+test_mask_dir = 'E:/polar/code/data/ir/entire/original_size/test_msks/'
+
+imgs_test = [imgs[1024],imgs[2424]]
+tmp = []
+
+for im in imgs_test:
+    im = crop_center_square(im)
+    tmp.append(im)
+
+imgs_test = tmp
+    
+for idx, img in enumerate(imgs_test):
+    plt.imsave('E:/polar/code/data/ir/entire/original_size/ims_raw_test/{}.png'.format(idx), img, cmap='gray')
+
+
+masks_test = []
+for f in os.listdir(test_mask_dir):
+    path = os.path.join(test_mask_dir, f)
+    mask = cv2.imread(path, 0)
+    mask = transform_color(mask)
+    mask = resize_image(mask)
+    mask = crop_center_square(mask)
+
+    masks_test.append(mask)
+
+imgs = np.array(imgs_test)
+masks = np.array(masks_test)
+
+imgs_png = []
+
+for im in os.listdir('E:/polar/code/data/ir/entire/original_size/ims_raw_test/'):
+    path = os.path.join('E:/polar/code/data/ir/entire/original_size/ims_raw_test/', im)
+    im = cv2.imread(path, 0)
+    im = crop_center_square(im)
+
+    imgs_png.append(im)
+
+imgs_raw_test = np.array(imgs_png)
+masks_raw_test = np.array(masks_test)
+
+# save 480 array
+np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np_test/480_im.npy', imgs_raw_test)
+np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np_test/480_ma.npy', masks_raw_test)
+
 ############### Create Patches ################
 
 def patch_extraction(imgs, masks, size, step):
