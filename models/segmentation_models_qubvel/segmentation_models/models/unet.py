@@ -58,7 +58,7 @@ def DecoderUpsamplingX2Block(filters, stage, use_batchnorm=False, use_dropout=Fa
         x = layers.UpSampling2D(size=2, name=up_name)(input_tensor)
 
         if use_dropout:
-            x = Dropout(0.2)(x)
+            x = Dropout(0.5)(x)
 
         if skip is not None:
             x = layers.Concatenate(axis=concat_axis, name=concat_name)([x, skip])
