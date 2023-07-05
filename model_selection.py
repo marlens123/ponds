@@ -33,21 +33,45 @@ np.save('E:/polar/code/data/stats/histpatch480.npy', np.array(hist))
 ###################################### Loss ########################################
 ####################################################################################
 
-#_, stats, hist = train_wrapper(images, masks, loss='focal', im_size=256, base_pref='patch_size_256', train_transfer='imagenet', batch_size=4)
-#_, stats, hist = train_wrapper(images, masks, loss='focal_dice', im_size=256, base_pref='patch_size_256', train_transfer='imagenet', batch_size=4)
+#_, stats, hist = train_wrapper(images, masks, loss='focal', im_size=256, base_pref='loss_focal', train_transfer='imagenet', batch_size=4)
+#_, stats, hist = train_wrapper(images, masks, loss='focal_dice', im_size=256, base_pref='loss_focaldice', train_transfer='imagenet', batch_size=4)
+
+
+####################################################################################
+############################### Dropout ############################################
+####################################################################################
+
+_, stats, hist = train_wrapper(images, masks, im_size=256, base_pref='dropout', use_dropout=True, train_transfer='imagenet', batch_size=4)
+np.save('E:/polar/code/data/stats/statsdropout.npy', stats)
+np.save('E:/polar/code/data/stats/histdropout.npy', np.array(hist))
 
 
 ####################################################################################
 ############################### Pretraining ########################################
 ####################################################################################
 
+# ALSO TRANSFER UNET FILE
 
+# freeze
+_, stats, hist = train_wrapper(images, masks, im_size=256, base_pref='transfer_freeze', encoder_freeze=True, train_transfer='imagenet', batch_size=4)
+np.save('E:/polar/code/data/stats/statstransfer_freeze.npy', stats)
+np.save('E:/polar/code/data/stats/histtransfer_freeze.npy', np.array(hist))
 
+# freeze fine-tune
+_, stats, hist = train_wrapper(images, masks, im_size=256, base_pref='transfer_freeze_tune', freeze_tune=True, train_transfer='imagenet', batch_size=4)
+np.save('E:/polar/code/data/stats/statstransfer_freeze_tune.npy', stats)
+np.save('E:/polar/code/data/stats/histtransfer_freeze_tune.npy', np.array(hist))
+
+# from scratch
+_, stats, hist = train_wrapper(images, masks, im_size=256, base_pref='transfer_none', train_transfer=None, batch_size=4)
+np.save('E:/polar/code/data/stats/statstransfer_none.npy', stats)
+np.save('E:/polar/code/data/stats/histtransfer_none.npy', np.array(hist))
 
 ####################################################################################
 ############################### Augmentation #######################################
 ####################################################################################
 
+# ALSO TRANSFER AUGMENTATION FILE
 
 
 ####################################################################################

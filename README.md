@@ -18,3 +18,9 @@ def get_submodules_from_kwargs(kwargs):
 
 
 (see https://github.com/qubvel/segmentation_models/issues/248)
+
+
+to run VIS segmentation:
+- create new environment with requirements specified in .txt
+- setup
+- run python ossp_process.py 'E:/polar/code/data/vis/segment/' 'srgb' 'E:/polar/code/ponds/ponds/vis_segmentation/OSSP-wright/training_datasets/icebridge_v5_training_data.h5' -v

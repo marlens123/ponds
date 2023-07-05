@@ -12,6 +12,7 @@ from utils.augmentation import get_training_augmentation, get_preprocessing, off
 from utils.data import Dataloder, Dataset
 from sklearn.model_selection import KFold
 from utils.patch_extraction import patch_pipeline, patch_extraction
+from models.segmentation_models_qubvel.segmentation_models.utils import set_trainable
 
 import wandb
 from wandb.keras import WandbMetricsLogger
@@ -31,7 +32,7 @@ class TimingCallback(keras.callbacks.Callback):
 
 
 def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34', batch_size=4, weight_classes=False, epochs=100, final_run=False,
-              class_weights=None, loss='categoricalCE', optimizer='Adam', augmentation=None, fold_no=0, input_normalize=False):
+              class_weights=None, loss='categoricalCE', optimizer='Adam', augmentation=None, fold_no=0, input_normalize=False, freeze_tune=False):
     
     CLASSES=['melt_pond', 'sea_ice']
     BACKBONE = backbone
@@ -123,14 +124,38 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
             WandbMetricsLogger()
         ]
 
-    history = model.fit(train_dataloader,
-                        verbose=1,
-                        callbacks=callbacks,
-                        steps_per_epoch=len(train_dataloader), 
-                        epochs=epochs,  
-                        validation_data=valid_dataloader, 
-                        validation_steps=len(valid_dataloader),
-                        shuffle=False)
+
+    if freeze_tune:
+        history = model.fit(train_dataloader,
+                            verbose=1,
+                            callbacks=callbacks,
+                            steps_per_epoch=len(train_dataloader), 
+                            epochs=50,  
+                            validation_data=valid_dataloader, 
+                            validation_steps=len(valid_dataloader),
+                            shuffle=False)        
+
+        # unfreeze encoder
+        set_trainable(model)
+
+        history = model.fit(train_dataloader,
+                            verbose=1,
+                            callbacks=callbacks,
+                            steps_per_epoch=len(train_dataloader), 
+                            epochs=50,  
+                            validation_data=valid_dataloader, 
+                            validation_steps=len(valid_dataloader),
+                            shuffle=False) 
+
+    else:
+        history = model.fit(train_dataloader,
+                            verbose=1,
+                            callbacks=callbacks,
+                            steps_per_epoch=len(train_dataloader), 
+                            epochs=epochs,  
+                            validation_data=valid_dataloader, 
+                            validation_steps=len(valid_dataloader),
+                            shuffle=False)
 
     # save model scores
     with open('./scores/{}_trainHistoryDict'.format(pref), 'wb') as file_pi:
@@ -149,7 +174,7 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
 
 
 
-def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoricalCE',
+def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoricalCE', freeze_tune=False,
               optimizer='Adam', train_transfer=None, encoder_freeze=False, input_normalize=False,
               batch_size=4, augmentation=None, mode=0, factor=2, epochs=100, patch_mode='slide_slide',
               weight_classes=False, use_dropout=False, use_batchnorm=True):
@@ -168,6 +193,12 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
         on_fly = None
 
     #################################################################
+
+    if freeze_tune:
+        encoder_freeze=True
+
+    #################################################################
+
 
     model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER,
                     decoder_use_dropout=use_dropout, decoder_use_batchnorm=use_batchnorm, encoder_freeze=encoder_freeze)  
@@ -346,7 +377,7 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
 
         model, scores, history, time = run_train(X_train, y_train, X_test, y_test, model=model, augmentation=on_fly, pref=pref, weight_classes=weight_classes, epochs=epochs,
                                     backbone=BACKBONE, batch_size=BATCH_SIZE, fold_no=fold_no, optimizer=optimizer, loss=loss, class_weights=class_weights,
-                                    input_normalize=input_normalize, final_run=False)
+                                    input_normalize=input_normalize, final_run=False, freeze_tune=freeze_tune)
         
         val_iou_all.append(history)
 
