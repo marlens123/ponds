@@ -17,7 +17,9 @@ imgs = ds.variables['Ts'][:]
 timestamps = ds.variables['time'][:]
 
 ############## Training Data ###############
-imgs_train = [imgs[2416],imgs[2380],imgs[2452],imgs[2468],imgs[2476],imgs[2708],imgs[3700],imgs[3884]]
+imgs_train = [imgs[2416],imgs[2380],imgs[2424],imgs[2468],imgs[2476],imgs[2708],imgs[3700],imgs[3884]]
+imgs_test = [imgs[1024], imgs[2452]]
+
 tmp = []
 
 for im in imgs_train:
@@ -56,7 +58,6 @@ np.save('E:/polar/code/data/ir/entire/original_size/prepared/480_ma.npy', masks)
 
 test_mask_dir = 'E:/polar/code/data/ir/entire/original_size/test_msks/'
 
-imgs_test = [imgs[1024],imgs[2424]]
 tmp = []
 
 for im in imgs_test:
@@ -98,37 +99,6 @@ masks_raw_test = np.array(masks_test)
 np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np_test/480_im.npy', imgs_raw_test)
 np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np_test/480_ma.npy', masks_raw_test)
 
-############### Create Patches ################
-
-def patch_extraction(imgs, masks, size, step):
-
-    img_patches = []
-    for img in imgs:     
-        patches_img = patchify(img, (size, size), step=step)
-        for i in range(patches_img.shape[0]):
-            for j in range(patches_img.shape[1]):
-                single_patch_img = patches_img[i,j,:,:]
-                img_patches.append(single_patch_img)
-    images = np.array(img_patches)
-
-    mask_patches = []
-    for img in masks:
-        patches_mask = patchify(img, (size, size), step=step)
-        
-        for i in range(patches_mask.shape[0]):
-            for j in range(patches_mask.shape[1]):
-                single_patch_mask = patches_mask[i,j,:,:]
-                mask_patches.append(single_patch_mask)
-    masks = np.array(mask_patches)
-
-    return images, masks
-
-
-patches_256 = patch_extraction(imgs_train, masks_train, size=256, step=224) # step 224 means that there will be overlap
-patches_128 = patch_extraction(imgs_train, masks_train, size=128, step=160) # step 120 means that there will be overlap
-patches_64 = patch_extraction(imgs_train, masks_train, size=64, step=68) # step 68 means that there will be parts of the image left out
-patches_32 = patch_extraction(imgs_train, masks_train, size=32, step=32) # no overlap
-
 imgs_png = []
 save_path = 'E:/polar/code/data/ir/entire/original_size/ims_raw/'
 
@@ -161,6 +131,39 @@ np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_ma.npy', mask
 # save normalized images as array
 np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_im_norm.npy', imgs_raw_norm)
 
+
+"""
+############### Create Patches ################
+
+def patch_extraction(imgs, masks, size, step):
+
+    img_patches = []
+    for img in imgs:     
+        patches_img = patchify(img, (size, size), step=step)
+        for i in range(patches_img.shape[0]):
+            for j in range(patches_img.shape[1]):
+                single_patch_img = patches_img[i,j,:,:]
+                img_patches.append(single_patch_img)
+    images = np.array(img_patches)
+
+    mask_patches = []
+    for img in masks:
+        patches_mask = patchify(img, (size, size), step=step)
+        
+        for i in range(patches_mask.shape[0]):
+            for j in range(patches_mask.shape[1]):
+                single_patch_mask = patches_mask[i,j,:,:]
+                mask_patches.append(single_patch_mask)
+    masks = np.array(mask_patches)
+
+    return images, masks
+
+
+patches_256 = patch_extraction(imgs_train, masks_train, size=256, step=224) # step 224 means that there will be overlap
+patches_128 = patch_extraction(imgs_train, masks_train, size=128, step=160) # step 120 means that there will be overlap
+patches_64 = patch_extraction(imgs_train, masks_train, size=64, step=68) # step 68 means that there will be parts of the image left out
+patches_32 = patch_extraction(imgs_train, masks_train, size=32, step=32) # no overlap
+
 patches_256_raw = patch_extraction(imgs_png, masks_train, size=256, step=224) # step 224 means that there will be overlap
 patches_128_raw = patch_extraction(imgs_png, masks_train, size=128, step=160) # step 120 means that there will be overlap
 patches_64_raw = patch_extraction(imgs_png, masks_train, size=64, step=68) # step 68 means that there will be parts of the image left out
@@ -185,3 +188,4 @@ np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/64_im.npy',patche
 np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/64_ma.npy',patches_64_raw[1])
 np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/32_im.npy',patches_32_raw[0])
 np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/32_ma.npy',patches_32_raw[1])
+"""

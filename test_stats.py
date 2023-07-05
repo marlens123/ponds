@@ -72,8 +72,6 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
         LOSS = dice_loss + (1 * focal_loss)
     elif loss == 'categoricalCE':
         LOSS = sm.losses.CategoricalCELoss(class_weights=weights)
-    elif loss== 'focal':
-        LOSS = sm.losses.CategoricalFocalLoss(class_weights=weights)
     else:
         print('No loss function specified')
 
@@ -151,8 +149,8 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
 
 def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoricalCE',
               optimizer='Adam', train_transfer=None, encoder_freeze=False, input_normalize=False,
-              batch_size=4, augmentation=None, mode=0, factor=2, epochs=100, patch_mode='slide_slide',
-              weight_classes=False, use_dropout=False, use_batchnorm=True):
+              batch_size=4, augmentation=None, mode=0, factor=2, epochs=50, patch_mode='slide_slide',
+              weight_classes=False, use_dropout=False, use_batchnorm=True, rnd_state=0):
 
     ################################################################
     
@@ -193,7 +191,7 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
     time_per_fold = []             
 
     # Define the K-fold Cross Validator
-    kfold = KFold(n_splits=num_folds, shuffle=True, random_state=14)
+    kfold = KFold(n_splits=num_folds, shuffle=True, random_state=rnd_state)
 
     # K-fold Cross Validation model evaluation
     fold_no = 1
@@ -322,19 +320,6 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
         ############# Tracking Config ############
         ##########################################
 
-        run = wandb.init(project='tir_mp',
-                            group=base_pref,
-                            name='foldn_{}'.format(fold_no),
-                            config={
-                            "loss_function": loss,
-                            "batch_size": batch_size,
-                            "backbone": backbone,
-                            "optimizer": optimizer,
-                            "train_transfer": train_transfer,
-                            "augmentation": AUGMENTATION
-                            }
-        )
-        config = wandb.config
 
         print("Test set size...", X_test.shape)
 
@@ -343,67 +328,12 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
         ##########################################
 
 
-
-        model, scores, history, time = run_train(X_train, y_train, X_test, y_test, model=model, augmentation=on_fly, pref=pref, weight_classes=weight_classes, epochs=epochs,
-                                    backbone=BACKBONE, batch_size=BATCH_SIZE, fold_no=fold_no, optimizer=optimizer, loss=loss, class_weights=class_weights,
-                                    input_normalize=input_normalize, final_run=False)
-        
-        val_iou_all.append(history)
-
-        val_loss_per_fold.append(scores[0])
-        val_iou_per_fold.append(scores[1])
-        val_iou_weighted_per_fold.append(scores[2])
-        val_f1_per_fold.append(scores[3])
-        val_prec_per_fold.append(scores[4])
-        val_rec_per_fold.append(scores[5])
-        mp_per_class_per_fold.append(scores[6])
-        si_per_class_per_fold.append(scores[7])
-        oc_per_class_per_fold.append(scores[8])
-        rounded_iou_per_fold.append(scores[9])
-
-        # sum up training time for individual epochs
-        time_per_fold.append(sum(time))
-
-        # close run for that fold
-        wandb.join()
-
         # Increase fold number
         fold_no = fold_no + 1
 
-    print(len(val_iou_all))
-    # best averaged run
-    best = [a + b + c + d for a, b, c, d in zip(val_iou_all[0], val_iou_all[1], val_iou_all[2], val_iou_all[3])]
-    best_epoch = max((v, i) for i, v in enumerate(best))[1]
-    best_iou = (max((v, i) for i, v in enumerate(best))[0]) / 4
+    return fold_stats
 
-    # == Provide average scores ==
-    print('------------------------------------------------------------------------')
-    print('Score per fold')
-    for i in range(0, len(val_iou_per_fold)):
-        print('------------------------------------------------------------------------')
-        print(f'> Fold {i+1} - Loss: {val_loss_per_fold[i]} - IoU: {val_iou_per_fold[i]}%')
-    print('------------------------------------------------------------------------')
-    print('Average scores for all folds:')
-    print(f'> IoU: {np.mean(val_iou_per_fold)} (+- {np.std(val_iou_per_fold)})')
-    print(f'> Loss: {np.mean(val_loss_per_fold)}')
-    print('------------------------------------------------------------------------')
-    print('Best run')
-    print(f'Best averaged val_iou is {best_iou} in epoch {best_epoch}')
 
-    val_iou_per_fold = np.array(val_iou_per_fold)
-    val_loss_per_fold = np.array(val_loss_per_fold)
-    val_iou_weighted_per_fold = np.array(val_iou_weighted_per_fold)
-    val_f1_per_fold = np.array(val_f1_per_fold)
-    val_prec_per_fold = np.array(val_prec_per_fold)
-    val_rec_per_fold = np.array(val_rec_per_fold)
-    mp_per_class_per_fold = np.array(mp_per_class_per_fold)
-    si_per_class_per_fold = np.array(si_per_class_per_fold)
-    oc_per_class_per_fold = np.array(oc_per_class_per_fold)
-    rounded_iou_per_fold = np.array(rounded_iou_per_fold)
-
-    time_per_fold = np.array(time_per_fold)
-
-    return time_per_fold, fold_stats, (best_epoch, best_iou)
 
 def final_train():
     return
