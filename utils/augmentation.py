@@ -28,37 +28,44 @@ def get_training_augmentation(im_size, mode=0):
     if mode == 0:
         train_transform = [
             A.HorizontalFlip(),
-            A.VerticalFlip(),
-            # interpolation 0 means nearest interpolation such that mask labels are preserved
-            A.Rotate(interpolation=0),            
-        ]
-        return A.Compose(train_transform)
-
-    elif mode == 1:
-        train_transform = [
-            A.HorizontalFlip(),
-            A.VerticalFlip(),
-            A.RandomSizedCrop(min_max_height=[int(0.5*im_size), int(0.8*im_size)], height=im_size, width=im_size, interpolation=0, p=0.5),
-            A.Rotate(interpolation=0),
+            A.VerticalFlip(),           
         ]
         return A.Compose(train_transform)
     
+    elif mode == 1:
+        train_transform = [
+            #A.HorizontalFlip(),
+            #A.VerticalFlip(),
+            # interpolation 0 means nearest interpolation such that mask labels are preserved
+            A.Rotate(interpolation=0),
+        ]
+        return A.Compose(train_transform)
+
     elif mode == 2:
         train_transform = [
-            A.HorizontalFlip(),
-            A.VerticalFlip(),
+            #A.HorizontalFlip(),
+            #A.VerticalFlip(),
             A.RandomSizedCrop(min_max_height=[int(0.5*im_size), int(0.8*im_size)], height=im_size, width=im_size, interpolation=0, p=0.5),
-            A.Rotate(interpolation=0),
-            A.RandomBrightnessContrast(),
+            #A.Rotate(interpolation=0),
         ]
         return A.Compose(train_transform)
     
     elif mode == 3:
         train_transform = [
-            A.HorizontalFlip(),
-            A.VerticalFlip(),
-            A.RandomSizedCrop(min_max_height=[int(0.5*im_size), int(0.8*im_size)], height=im_size, width=im_size, interpolation=0, p=0.5),
-            A.Rotate(interpolation=0),
+            #A.HorizontalFlip(),
+            #A.VerticalFlip(),
+            #A.RandomSizedCrop(min_max_height=[int(0.5*im_size), int(0.8*im_size)], height=im_size, width=im_size, interpolation=0, p=0.5),
+            #A.Rotate(interpolation=0),
+            A.RandomBrightnessContrast(),
+        ]
+        return A.Compose(train_transform)
+    
+    elif mode == 4:
+        train_transform = [
+            #A.HorizontalFlip(),
+            #A.VerticalFlip(),
+            #A.RandomSizedCrop(min_max_height=[int(0.5*im_size), int(0.8*im_size)], height=im_size, width=im_size, interpolation=0, p=0.5),
+            #A.Rotate(interpolation=0),
             A.OneOf(
                 [
                     A.Sharpen(p=1),
@@ -70,13 +77,22 @@ def get_training_augmentation(im_size, mode=0):
         ]
         return A.Compose(train_transform)
 
-    elif mode == 4:
+    elif mode == 5:
+        train_transform = [
+            #A.HorizontalFlip(),
+            #A.VerticalFlip(),
+            #A.RandomSizedCrop(min_max_height=[int(0.5*im_size), int(0.8*im_size)], height=im_size, width=im_size, interpolation=0, p=0.5),
+            #A.Rotate(interpolation=0),
+            A.GaussNoise(),
+        ]
+        return A.Compose(train_transform)
+    
+    elif mode == 6:
         train_transform = [
             A.HorizontalFlip(),
             A.VerticalFlip(),
-            A.RandomSizedCrop(min_max_height=[int(0.5*im_size), int(0.8*im_size)], height=im_size, width=im_size, interpolation=0, p=0.5),
+            # interpolation 0 means nearest interpolation such that mask labels are preserved
             A.Rotate(interpolation=0),
-            A.GaussNoise(),
         ]
         return A.Compose(train_transform)
 
