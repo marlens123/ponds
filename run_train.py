@@ -1,5 +1,3 @@
-
-
 # Credit Example
 
 # MIT License

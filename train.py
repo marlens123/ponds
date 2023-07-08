@@ -32,7 +32,8 @@ class TimingCallback(keras.callbacks.Callback):
 
 
 def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34', batch_size=4, weight_classes=False, epochs=100, final_run=False,
-              class_weights=None, loss='categoricalCE', optimizer='Adam', augmentation=None, fold_no=0, input_normalize=False, freeze_tune=False):
+              class_weights=None, loss='categoricalCE', optimizer='Adam', augmentation=None, fold_no=0, input_normalize=False, freeze_tune=False,
+              early_stop=False):
     
     CLASSES=['melt_pond', 'sea_ice']
     BACKBONE = backbone
@@ -74,7 +75,7 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
     elif loss == 'categoricalCE':
         LOSS = sm.losses.CategoricalCELoss(class_weights=weights)
     elif loss== 'focal':
-        LOSS = sm.losses.CategoricalFocalLoss(class_weights=weights)
+        LOSS = sm.losses.CategoricalFocalLoss()
     else:
         print('No loss function specified')
 
@@ -103,7 +104,7 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
                                                            sea_ice_iou, ocean_iou, rounded_iou])
 
 
-    if final_run:
+    if early_stop:
         # save weights of best performing model in terms of minimal val_loss
         callbacks = [
             keras.callbacks.ModelCheckpoint('./weights/best_model{}.h5'.format(pref), save_weights_only=True, save_best_only=True, mode='min'),
@@ -436,5 +437,213 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
 
     return time_per_fold, fold_stats, (best_epoch, best_iou)
 
-def final_train():
-    return
+
+
+
+def final_train(X_train, y_train, X_test, y_test, im_size, base_pref, backbone='resnet34', loss='categoricalCE', freeze_tune=False,
+                optimizer='Adam', train_transfer=None, encoder_freeze=False, input_normalize=False,
+                batch_size=4, augmentation=None, mode=0, factor=2, epochs=100, patch_mode='slide_slide',
+                weight_classes=False, use_dropout=False, use_batchnorm=True, early_stop=False):
+    
+    ################################################################
+    
+    BACKBONE = backbone
+    TRAIN_TRANSFER = train_transfer
+    AUGMENTATION = augmentation
+    BATCH_SIZE = batch_size
+
+    # perform on-fly augmentation also when offline augmentation
+    if AUGMENTATION == 'on_fly':    
+        on_fly = get_training_augmentation(im_size=im_size, mode=mode)
+    else:
+        on_fly = None
+
+    #################################################################
+
+    if freeze_tune:
+        encoder_freeze=True
+
+    #################################################################
+
+
+    model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER,
+                    decoder_use_dropout=use_dropout, decoder_use_batchnorm=use_batchnorm, encoder_freeze=encoder_freeze)  
+
+    print(model.summary())           
+
+    ##########################################
+    ################# Prefix #################
+    ##########################################
+
+    # prefix should contain the fold number
+    pref = base_pref
+
+    ########################################## 
+    ############## Class Weights #############
+    ##########################################
+
+    masks_resh = y_train.reshape(-1,1)
+    masks_resh_list = masks_resh.flatten().tolist()
+    class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(masks_resh), y=masks_resh_list)
+    print("Class weights are...:", class_weights)
+    
+    ##########################################
+    ############ Patch Extraction ############
+    ##########################################
+
+    # 320 random patches per image
+    if im_size==32:
+        if patch_mode=='random_random':
+            X_train, y_train = patch_pipeline(X_train, y_train, nr_patches=320, patch_size=32)
+            X_test, y_test = patch_pipeline(X_test, y_test, nr_patches=320, patch_size=32)
+
+        elif patch_mode=='random_slide':
+            X_train, y_train = patch_pipeline(X_train, y_train, nr_patches=320, patch_size=32)
+            X_test, y_test = patch_extraction(X_test, y_test, size=32, step=32)
+
+        elif patch_mode=='slide_slide':
+            X_train, y_train = patch_extraction(X_train, y_train, size=32, step=32)
+            X_test, y_test = patch_extraction(X_test, y_test, size=32, step=32)
+
+        else:
+            'Patch mode must be one of "random_random", "random_slide", "slide_slide"'
+    
+    # 80 random patches per image
+    elif im_size==64:
+        if patch_mode=='random_random':
+            X_train, y_train = patch_pipeline(X_train, y_train, nr_patches=80, patch_size=64)
+            X_test, y_test = patch_pipeline(X_test, y_test, nr_patches=80, patch_size=64)
+
+        elif patch_mode=='random_slide':
+            X_train, y_train = patch_pipeline(X_train, y_train, nr_patches=80, patch_size=64)
+            X_test, y_test = patch_extraction(X_test, y_test, size=64, step=68)
+
+        elif patch_mode=='slide_slide':
+            X_train, y_train = patch_extraction(X_train, y_train, size=64, step=68)
+            X_test, y_test = patch_extraction(X_test, y_test, size=64, step=68)
+
+        else:
+            'Patch mode must be one of "random_random", "random_slide", "slide_slide"'
+        
+    # 20 random patches per image
+    elif im_size==128:
+        if patch_mode=='random_random': 
+            X_train, y_train = patch_pipeline(X_train, y_train, nr_patches=20, patch_size=128)
+            X_test, y_test = patch_pipeline(X_test, y_test, nr_patches=20, patch_size=128)
+
+        elif patch_mode=='random_slide':
+            X_train, y_train = patch_pipeline(X_train, y_train, nr_patches=20, patch_size=128)
+            X_test, y_test = patch_extraction(X_test, y_test, size=128, step=160)
+
+        elif patch_mode=='slide_slide':
+            X_train, y_train = patch_extraction(X_train, y_train, size=128, step=160)
+            X_test, y_test = patch_extraction(X_test, y_test, size=128, step=160)
+
+        else:
+            'Patch mode must be one of "random_random", "random_slide", "slide_slide"'
+        
+    # 5 random patches per image
+    elif im_size==256:
+        if patch_mode=='random_random':
+            X_train, y_train = patch_pipeline(X_train, y_train, nr_patches=5, patch_size=256)
+            X_test, y_test = patch_pipeline(X_test, y_test, nr_patches=5, patch_size=256)
+
+        elif patch_mode=='random_slide':
+            X_train, y_train = patch_pipeline(X_train, y_train, nr_patches=5, patch_size=256)
+            X_test, y_test = patch_extraction(X_test, y_test, size=256, step=224)
+
+        elif patch_mode=='slide_slide':
+            X_train, y_train = patch_extraction(X_train, y_train, size=256, step=224)
+            X_test, y_test = patch_extraction(X_test, y_test, size=256, step=224)
+
+        else:
+            'Patch mode must be one of "random_random", "random_slide", "slide_slide"'
+
+    # no patch extraction
+    elif im_size==480:
+        X_train = X_train
+        y_train = y_train
+        X_test = X_test
+        y_test = y_test
+
+
+    print("Train size after patch extraction...", X_train.shape)
+    print("Test size after patch extraction...", X_test.shape)
+
+    ##########################################
+    ######### Offline Augmentation ###########
+    ##########################################
+
+    if AUGMENTATION == 'offline':
+        X_train, y_train = offline_augmentation(X_train, y_train, im_size=im_size, mode=mode, factor=factor)
+
+    print("Train size imgs ...", X_train.shape)
+    print("Train size masks ...", y_train.shape)
+    print("Test size imgs ...", X_test.shape)
+    print("Test size masks ...", y_test.shape)
+
+    ##########################################
+    ############# Tracking Config ############
+    ##########################################
+
+    run = wandb.init(project='tir_mp',
+                        group=base_pref,
+                        name=base_pref,
+                        config={
+                        "loss_function": loss,
+                        "batch_size": batch_size,
+                        "backbone": backbone,
+                        "optimizer": optimizer,
+                        "train_transfer": train_transfer,
+                        "augmentation": AUGMENTATION
+                        }
+    )
+    config = wandb.config
+
+    print("Test set size...", X_test.shape)
+
+    ##########################################
+    ################ Training ################
+    ##########################################
+
+
+
+    model, scores, history, time = run_train(X_train, y_train, X_test, y_test, model=model, augmentation=on_fly, pref=pref, weight_classes=weight_classes, epochs=epochs,
+                                backbone=BACKBONE, batch_size=BATCH_SIZE, fold_no=0, optimizer=optimizer, loss=loss, class_weights=class_weights,
+                                input_normalize=input_normalize, final_run=True, freeze_tune=freeze_tune, early_stop=early_stop)
+    
+    wandb.join()
+
+    val_iou_all = history
+    time_per_fold = []
+
+    val_loss = scores[0]
+    val_iou = scores[1]
+    val_iou_weighted = scores[2]
+    val_f1 = scores[3]
+    val_prec = scores[4]
+    val_rec = scores[5]
+    mp_per_class = scores[6]
+    si_per_class = scores[7]
+    oc_per_class = scores[8]
+    rounded_iou = scores[9]
+
+    # sum up training time for individual epochs
+    time_per_fold.append(sum(time))
+
+    print(len(val_iou_all))
+
+    val_iou = np.array(val_iou)
+    val_loss = np.array(val_loss)
+    val_iou_weighted = np.array(val_iou_weighted)
+    val_f1 = np.array(val_f1)
+    val_prec = np.array(val_prec)
+    val_rec = np.array(val_rec)
+    mp_per_class = np.array(mp_per_class)
+    si_per_class = np.array(si_per_class)
+    oc_per_class = np.array(oc_per_class)
+    rounded_iou = np.array(rounded_iou)
+
+    time_per_fold = np.array(time_per_fold)
+
+    return time_per_fold
