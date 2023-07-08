@@ -24,3 +24,7 @@ to run VIS segmentation:
 - create new environment with requirements specified in .txt
 - setup
 - run python ossp_process.py 'E:/polar/code/data/vis/segment/' 'srgb' 'E:/polar/code/ponds/ponds/vis_segmentation/OSSP-wright/training_datasets/icebridge_v5_training_data.h5' -v
+
+----------------------------
+
+semantic segmentation model architecture by quebvel, with changes: Dropout layers added (marked in file)
