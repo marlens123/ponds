@@ -3,7 +3,7 @@ from keras_applications import get_submodules_from_kwargs
 from ._common_blocks import Conv2dBn
 from ._utils import freeze_model
 from ..backbones.backbones_factory import Backbones
-from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Dropout #### CHANGED ####
 
 backend = None
 layers = None
@@ -58,7 +58,7 @@ def DecoderUpsamplingX2Block(filters, stage, use_batchnorm=False, use_dropout=Fa
         x = layers.UpSampling2D(size=2, name=up_name)(input_tensor)
 
         if use_dropout:
-            x = Dropout(0.5)(x)
+            x = Dropout(0.5)(x) #### CHANGED ####
 
         if skip is not None:
             x = layers.Concatenate(axis=concat_axis, name=concat_name)([x, skip])
@@ -92,7 +92,7 @@ def DecoderTransposeX2Block(filters, stage, use_batchnorm=False, use_dropout=Fal
         )(input_tensor)
 
         if use_dropout:
-            x = Dropout(0.5)(x)
+            x = Dropout(0.5)(x) #### CHANGED ####
 
         if use_batchnorm:
             x = layers.BatchNormalization(axis=bn_axis, name=bn_name)(x)
@@ -122,7 +122,7 @@ def build_unet(
         classes=1,
         activation='sigmoid',
         use_batchnorm=True,
-        use_dropout=False,
+        use_dropout=False, #### CHANGED ####
 ):
     input_ = backbone.input
     x = backbone.output
@@ -179,7 +179,7 @@ def Unet(
         decoder_block_type='upsampling',
         decoder_filters=(256, 128, 64, 32, 16),
         decoder_use_batchnorm=True,
-        decoder_use_dropout=False,
+        decoder_use_dropout=False, #### CHANGED ####
         **kwargs
 ):
     """ Unet_ is a fully convolution neural network for image semantic segmentation
@@ -248,7 +248,7 @@ def Unet(
         activation=activation,
         n_upsample_blocks=len(decoder_filters),
         use_batchnorm=decoder_use_batchnorm,
-        use_dropout=decoder_use_dropout,
+        use_dropout=decoder_use_dropout, #### CHANGED ####
     )
 
     # lock encoder weights for fine-tuning
