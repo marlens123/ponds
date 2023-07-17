@@ -72,6 +72,8 @@ class Dataset:
         print(mask.shape)
         print(np.unique(mask))
 
+        print(image.dtype)
+
         image = image.astype(np.float32)
         mask = mask.astype(np.float32)
 

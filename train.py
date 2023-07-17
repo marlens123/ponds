@@ -201,10 +201,14 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
     #################################################################
 
 
+
     model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER,
                     decoder_use_dropout=use_dropout, decoder_use_batchnorm=use_batchnorm, encoder_freeze=encoder_freeze)  
 
     print(model.summary())
+
+    dot_img_file = './summary/model_dropout.png'
+    tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True, dpi=300)
 
     # 4-crossfold validation: https://www.kaggle.com/code/ayuraj/efficientnet-mixup-k-fold-using-tf-and-wandb/notebook
     
@@ -605,8 +609,6 @@ def final_train(X_train, y_train, X_test, y_test, im_size, base_pref, backbone='
     ##########################################
     ################ Training ################
     ##########################################
-
-
 
     model, scores, history, time = run_train(X_train, y_train, X_test, y_test, model=model, augmentation=on_fly, pref=pref, weight_classes=weight_classes, epochs=epochs,
                                 backbone=BACKBONE, batch_size=BATCH_SIZE, fold_no=0, optimizer=optimizer, loss=loss, class_weights=class_weights,

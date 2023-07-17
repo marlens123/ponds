@@ -52,4 +52,7 @@ Python 3.6 (mit Anaconda)
 
 Installationsreihenfolge ist wichtig!
 
+graphviz
+pyplot # for printing model summary
+
 
