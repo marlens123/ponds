@@ -22,9 +22,19 @@ def get_submodules_from_kwargs(kwargs):
 
 to run VIS segmentation:
 - create new environment with requirements specified in .txt
+- direct into OSSP-wright folder
 - setup
-- run python ossp_process.py 'E:/polar/code/data/vis/segment/' 'srgb' 'E:/polar/code/ponds/ponds/vis_segmentation/OSSP-wright/training_datasets/icebridge_v5_training_data.h5' -v
+- run python ossp_process.py 'E:/polar/code/data/evaluation/mpf/vis/' 'srgb' 'E:/polar/code/ponds/ponds/vis_segmentation/OSSP-wright/training_datasets/icebridge_v5_training_data.h5' -v
 
 ----------------------------
 
 semantic segmentation model architecture by quebvel, with changes: Dropout layers added (marked in file)
+
+----------------------------
+
+File Contents:
+
+Annotation:
+----------
+- 'data_preparation/extract.ipynb': notebook to extract and save TIR images for visual inspection and mask creation
+- 'data_preparation/edge_detection_annotation.ipynb': notebook used to create edge maps for annotation

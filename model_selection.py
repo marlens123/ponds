@@ -216,4 +216,4 @@ time = final_train(images, masks, test_images, test_masks, loss='focal_dice', we
 #np.save('E:/polar/code/data/stats/statsaugment_onfly4_200t.npy', stats)
 #np.save('E:/polar/code/data/stats/histaugment_onfly4_200t.npy', np.array(hist))
 
-_, stats, hist = train_wrapper(images, masks, im_size=32, base_pref='test', epochs=200, use_dropout=True, augmentation='on_fly', mode=4, loss='focal_dice', weight_classes=True, train_transfer='imagenet', batch_size=2)
+_, stats, hist = train_wrapper(images, masks, im_size=480, base_pref='test', epochs=200, use_dropout=True, augmentation='on_fly', mode=4, loss='focal_dice', weight_classes=True, train_transfer='imagenet', batch_size=2)
