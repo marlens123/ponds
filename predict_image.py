@@ -133,10 +133,7 @@ def smooth_patch_predict(model, image, patch_size, model_preprocessing, smooth, 
 
     return final_prediction
 
-def predict(img, im_size, weights, backbone='resnet34', train_transfer='imagenet', smooth=False, save_path=None, visualize=True):
-    
-    #if not im_size==480:
-    #    img = crop_center_square(img, 256)
+def predict(img, im_size, weights, backbone='resnet34', train_transfer='imagenet', smooth=False, save_path=None):
     
     BACKBONE = backbone
     TRAIN_TRANSFER = train_transfer
@@ -145,12 +142,19 @@ def predict(img, im_size, weights, backbone='resnet34', train_transfer='imagenet
     prepro = get_preprocessing(sm.get_preprocessing(BACKBONE))
 
     model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER)
-    model.load_weights(weights)
+    model.load_weights(WEIGHTS)
 
     if smooth:
-        segmented_image = smooth_patch_predict(model, img, im_size, model_preprocessing=prepro, smooth=True, visualize=visualize)
+        segmented_image = smooth_patch_predict(model, img, im_size, model_preprocessing=prepro, smooth=True)
     else:
-        segmented_image = patch_predict(model, img, im_size, model_preprocessing=prepro, visualize=visualize)
+        # crop the image to be predicted to a size that is divisible by the patch size used
+        if im_size==256:
+            img = crop_center_square(img, 256)
+        if im_size==128:
+            img = crop_center_square(img, 384)
+        if im_size==64:
+            img = crop_center_square(img, 448)
+        segmented_image = patch_predict(model, img, im_size, model_preprocessing=prepro)
 
     visualize_ir(segmented_image)
     cv2.imwrite(save_path, segmented_image)

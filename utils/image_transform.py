@@ -9,6 +9,8 @@ def transform_color(image):
     for idx,elem in enumerate(uniques):
         mask = np.where(image == elem)
         image[mask] = idx
+
+        # one mask had four instead of three unique pixel values --> make sure the additional one is converted correctly
         mask2 = np.where(image == 178)
         image[mask2] = 1
     return image

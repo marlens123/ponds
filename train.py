@@ -31,9 +31,51 @@ class TimingCallback(keras.callbacks.Callback):
         self.logs.append(timer()-self.starttime)
 
 
-def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34', batch_size=4, weight_classes=False, epochs=100, final_run=False,
-              class_weights=None, loss='categoricalCE', optimizer='Adam', augmentation=None, fold_no=0, input_normalize=False, freeze_tune=False,
+def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34', batch_size=4, weight_classes=False, epochs=100,
+              class_weights=None, loss='categoricalCE', optimizer='Adam', augmentation=None, input_normalize=False, freeze_tune=False,
               early_stop=False):
+    """
+    Training function.
+
+    Parameters:
+    -----------
+        X_train : numpy.ndarray
+            train images
+        y_train : numpy.ndarray
+            image labels
+        X_test : numpy.ndarray
+            test images
+        y_test : numpy.ndarray
+            test labels
+        model : 
+        pref : str
+            identifier for training run
+        backbone : str
+        loss : str
+        freeze_tune : Bool
+            (doesn't work yet) if True, freezes encoder for half of epochs and sets to trainable for second half
+        optimizer : str
+        train_transfer : str or None
+            'imagenet' or None (from scratch)
+        encoder_freeze : Bool
+            if True, uses fixed feature extractor when pre-training
+        input_normalize : Bool
+            (not used) whether to normalize input
+        batch_size : int
+        augmentation : 
+            on-fly augmentation methods (if to be appplied; else None)
+        final_run : Bool
+            (not used) whether this is the final run
+        epochs : int
+        weight_classes : Bool
+            whether to weight classes in loss function
+        class_weights :
+            the class weights to use
+    
+    Return:
+    ------
+        model, scores, hist_val_iou, time   
+    """
     
     CLASSES=['melt_pond', 'sea_ice']
     BACKBONE = backbone
@@ -108,8 +150,6 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
         # save weights of best performing model in terms of minimal val_loss
         callbacks = [
             keras.callbacks.ModelCheckpoint('./weights/best_model{}.h5'.format(pref), save_weights_only=True, save_best_only=True, mode='min'),
-            # reduces learning rate when metric has stopped improving
-            # keras.callbacks.ReduceLROnPlateau(),
             keras.callbacks.EarlyStopping(patience=10),
             TimingCallback(),
             WandbMetricsLogger()
@@ -119,8 +159,6 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
         # save weights of best performing model in terms of minimal val_loss
         callbacks = [
             keras.callbacks.ModelCheckpoint('./weights/best_model{}.h5'.format(pref), save_weights_only=True, save_best_only=True, mode='min'),
-            # reduces learning rate when metric has stopped improving
-            # keras.callbacks.ReduceLROnPlateau(),
             TimingCallback(),
             WandbMetricsLogger()
         ]
@@ -179,40 +217,90 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
               optimizer='Adam', train_transfer=None, encoder_freeze=False, input_normalize=False,
               batch_size=4, augmentation=None, mode=0, factor=2, epochs=100, patch_mode='slide_slide',
               weight_classes=False, use_dropout=False, use_batchnorm=True):
+    """
+    Function that starts the training pipeline for model selection (with 4-crossfold validation).
+
+    Parameters:
+    -----------
+        X : numpy.ndarray
+            images
+        y : numpy.ndarray
+            image labels
+        im_size : int
+            patch size
+        base_pref : str
+            identifier for training run
+        backbone : str
+        loss : str
+        freeze_tune : Bool
+            (doesn't work yet) if True, freezes encoder for half of epochs and sets to trainable for second half
+        optimizer : str
+        train_transfer : str or None
+            'imagenet' or None (from scratch)
+        encoder_freeze : Bool
+            if True, uses fixed feature extractor when pre-training
+        input_normalize : Bool
+            (not used) whether to normalize input
+        batch_size : int
+        augmentation : str or None
+            can be 'on_fly' or 'offline'
+        mode : int
+            augmentation mode - 0 = flipping, 1 = rotation, 2 = cropping, 3 = brightness contrast, 4 = sharpen blur, 5 = Gaussian noise
+        factor : int
+            used for offline augmentation: magnitude by which to increase dataset size
+        epochs : int
+        patch_mode : str
+            (for this work, only 'slide_slide' is used) - whether to extract patches with sliding window ('slide_slide'), randomly ('random_random') 
+            or training set in random and testing in slide mode ('random_slide')
+        weight_classes : Bool
+            whether to weight classes in loss function
+        use_dropout : Bool
+            whether to use dropout in decoder
+        use_batchnorm : Bool
+            (not used) whether to use batchnorm
+    
+    Return:
+    ------
+        time used (not used), fold statistics, and best average iou with corresponding epoch
+
+    """
 
     ################################################################
-    
+    ##################### HYPERPARAMETER SETUP #####################
+    ################################################################
+
     BACKBONE = backbone
     TRAIN_TRANSFER = train_transfer
     AUGMENTATION = augmentation
     BATCH_SIZE = batch_size
 
-    # perform on-fly augmentation also when offline augmentation
     if AUGMENTATION == 'on_fly':    
         on_fly = get_training_augmentation(im_size=im_size, mode=mode)
     else:
         on_fly = None
 
-    #################################################################
-
     if freeze_tune:
         encoder_freeze=True
 
     #################################################################
-
+    ######################### MODEL SETUP ###########################
+    #################################################################
 
 
     model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER,
                     decoder_use_dropout=use_dropout, decoder_use_batchnorm=use_batchnorm, encoder_freeze=encoder_freeze)  
 
+    print(type(model))
     print(model.summary())
 
     dot_img_file = './summary/model_dropout.png'
     tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True, dpi=300)
 
-    # 4-crossfold validation: https://www.kaggle.com/code/ayuraj/efficientnet-mixup-k-fold-using-tf-and-wandb/notebook
-    
-    # 4 to make sure that all images are equal split (6 train, 2 test)
+
+    #################################################################
+    ####################### CROSSFOLD SETUP #########################
+    #################################################################
+
     num_folds = 4
 
     val_loss_per_fold = []
@@ -228,15 +316,11 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
 
     time_per_fold = []             
 
-    # Define the K-fold Cross Validator
+    # define crossfold validator with random split
     kfold = KFold(n_splits=num_folds, shuffle=True, random_state=14)
 
-    # K-fold Cross Validation model evaluation
     fold_no = 1
-
-    # fold statistics
     fold_stats = []
-
     val_iou_all = []
 
     for train, test in kfold.split(X, y):
@@ -245,14 +329,12 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
         ################# Prefix #################
         ##########################################
 
-        # prefix should contain the fold number
         pref = base_pref + "_foldn{}".format(fold_no)
 
         ########################################## 
         ############## Class Weights #############
         ##########################################
 
-        # compute class weights after split 
         masks_resh = y[train].reshape(-1,1)
         masks_resh_list = masks_resh.flatten().tolist()
         class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(masks_resh), y=masks_resh_list)
@@ -378,8 +460,6 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
         ################ Training ################
         ##########################################
 
-
-
         model, scores, history, time = run_train(X_train, y_train, X_test, y_test, model=model, augmentation=on_fly, pref=pref, weight_classes=weight_classes, epochs=epochs,
                                     backbone=BACKBONE, batch_size=BATCH_SIZE, fold_no=fold_no, optimizer=optimizer, loss=loss, class_weights=class_weights,
                                     input_normalize=input_normalize, final_run=False, freeze_tune=freeze_tune)
@@ -442,33 +522,84 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
     return time_per_fold, fold_stats, (best_epoch, best_iou)
 
 
-
-
 def final_train(X_train, y_train, X_test, y_test, im_size, base_pref, backbone='resnet34', loss='categoricalCE', freeze_tune=False,
                 optimizer='Adam', train_transfer=None, encoder_freeze=False, input_normalize=False,
                 batch_size=4, augmentation=None, mode=0, factor=2, epochs=100, patch_mode='slide_slide',
                 weight_classes=False, use_dropout=False, use_batchnorm=True, early_stop=False):
+    """
+    Function that starts the training pipeline for final model construction (with simple train-test split).
+
+    Parameters:
+    -----------
+        X_train : numpy.ndarray
+            train images
+        y_train : numpy.ndarray
+            train image labels
+        X_test : numpy.ndarray
+            test images
+        y_test : numpy.ndarray
+            test labels
+        im_size : int
+            patch size
+        base_pref : str
+            identifier for training run
+        backbone : str
+        loss : str
+        freeze_tune : Bool
+            (doesn't work yet) if True, freezes encoder for half of epochs and sets to trainable for second half
+        optimizer : str
+        train_transfer : str or None
+            'imagenet' or None (from scratch)
+        encoder_freeze : Bool
+            if True, uses fixed feature extractor when pre-training
+        input_normalize : Bool
+            (not used) whether to normalize input
+        batch_size : int
+        augmentation : str or None
+            can be 'on_fly' or 'offline'
+        mode : int
+            augmentation mode - 0 = flipping, 1 = rotation, 2 = cropping, 3 = brightness contrast, 4 = sharpen blur, 5 = Gaussian noise
+        factor : int
+            used for offline augmentation: magnitude by which to increase dataset size
+        epochs : int
+        patch_mode : str
+            (for this work, only 'slide_slide' is used) - whether to extract patches with sliding window ('slide_slide'), randomly ('random_random') 
+            or training set in random and testing in slide mode ('random_slide')
+        weight_classes : Bool
+            whether to weight classes in loss function
+        use_dropout : Bool
+            whether to use dropout in decoder
+        use_batchnorm : Bool
+            (not used) whether to use batchnorm
+        early_stop : Bool
+            (not used) whether to use early stopping
+    
+    Return:
+    ------
+        time used (not used)
+
+    """
     
     ################################################################
-    
+    ##################### HYPERPARAMETER SETUP #####################
+    ################################################################
+
     BACKBONE = backbone
     TRAIN_TRANSFER = train_transfer
     AUGMENTATION = augmentation
     BATCH_SIZE = batch_size
 
-    # perform on-fly augmentation also when offline augmentation
     if AUGMENTATION == 'on_fly':    
         on_fly = get_training_augmentation(im_size=im_size, mode=mode)
     else:
         on_fly = None
 
-    #################################################################
-
     if freeze_tune:
         encoder_freeze=True
 
     #################################################################
-
+    ######################### MODEL SETUP ###########################
+    #################################################################
 
     model = sm.Unet(BACKBONE, input_shape=(im_size, im_size, 3), classes=3, activation='softmax', encoder_weights=TRAIN_TRANSFER,
                     decoder_use_dropout=use_dropout, decoder_use_batchnorm=use_batchnorm, encoder_freeze=encoder_freeze)  
@@ -617,7 +748,7 @@ def final_train(X_train, y_train, X_test, y_test, im_size, base_pref, backbone='
     wandb.join()
 
     val_iou_all = history
-    time_per_fold = []
+    time_list = []
 
     val_loss = scores[0]
     val_iou = scores[1]
@@ -631,7 +762,7 @@ def final_train(X_train, y_train, X_test, y_test, im_size, base_pref, backbone='
     rounded_iou = scores[9]
 
     # sum up training time for individual epochs
-    time_per_fold.append(sum(time))
+    time_list.append(sum(time))
 
     print(len(val_iou_all))
 
@@ -646,6 +777,6 @@ def final_train(X_train, y_train, X_test, y_test, im_size, base_pref, backbone='
     oc_per_class = np.array(oc_per_class)
     rounded_iou = np.array(rounded_iou)
 
-    time_per_fold = np.array(time_per_fold)
+    time_array = np.array(time_list)
 
-    return time_per_fold
+    return time_array

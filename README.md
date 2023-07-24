@@ -28,7 +28,7 @@ to run VIS segmentation:
 
 ----------------------------
 
-semantic segmentation model architecture by quebvel, with changes: Dropout layers added (marked in file)
+semantic segmentation model architecture by quebvel, with changes: Dropout layers added (marked in file with 'CHANGED')
 
 ----------------------------
 
@@ -38,3 +38,8 @@ Annotation:
 ----------
 - 'data_preparation/extract.ipynb': notebook to extract and save TIR images for visual inspection and mask creation
 - 'data_preparation/edge_detection_annotation.ipynb': notebook used to create edge maps for annotation
+
+
+Coding references:
+- https://www.kaggle.com/code/ayuraj/efficientnet-mixup-k-fold-using-tf-and-wandb/notebook (wandb and k-crossfold validation)
+- patchify library for patch extraction
