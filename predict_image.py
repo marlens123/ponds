@@ -95,23 +95,6 @@ def patch_predict(model, image, patch_size, model_preprocessing, visualize=True)
 def smooth_patch_predict(model, image, patch_size, model_preprocessing, smooth, visualize=True):
     """
     https://github.com/bnsreenu/python_for_microscopists/tree/master/229_smooth_predictions_by_blending_patches
-    
-    How this should work: 
-    Motivation: There might be high error on the predictions made near the outside of the window,
-    predictions are just concatenated.
-
-    - uses 2D interpolation between overlapping patches when doing final predictions
-    - split image into patches, using a 5D np array (ordering in space can require two extra
-    dimensions?)
-    - reshape those patches to 4D with along a single batch size to be passed into the prediction function
-    - put predictions together back into 5D array to be merged with a spline interpolation to a regular 3D array
-
-    - first, use roation and mirroring so as to make the NN view the image under several different angles
-    - this is averaged out and thus reduces variance in the predictions
-    - predictions are blended together using interpolation with a simple second order spline window function:
-    weighting pixels when merging patches together
-    - amount of overlap between merged windows can be changed
-
     """
 
     input_image = preprocess_prediction(image, model_preprocessing=model_preprocessing, smooth=smooth)

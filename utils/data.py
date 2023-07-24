@@ -1,6 +1,5 @@
 # classes for data loading and preprocessing
-# Inspired by...
-# Edited: 
+# Inspired by https://github.com/qubvel/segmentation_models/blob/master/examples/multiclass%20segmentation%20(camvid).ipynb 
 
 import os
 import cv2
