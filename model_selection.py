@@ -3,11 +3,11 @@ from train import train_wrapper, final_train
 import cv2
 import os
 
-images = np.load('.data/ds_np/480_im.npy')
-masks = np.load('.data/ds_np/480_ma.npy')
+images = np.load('./data/ds_np/480_im.npy')
+masks = np.load('./data/ds_np/480_ma.npy')
 
-test_images = np.load('.data/test_ds_np/480_im.npy')
-test_masks = np.load('.data/test_ds_np/480_ma.npy')
+test_images = np.load('./data/test_ds_np/480_im.npy')
+test_masks = np.load('./data/test_ds_np/480_ma.npy')
 
 # By executing this python file, you will recreate our model training procedure. Note that you need to change the wandb setup
 # for experiment tracking in the train.py file.
