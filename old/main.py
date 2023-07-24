@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 
-from models.unet import unet_model
+from old.unet import unet_model
 from old.data_pipeline import data_pipeline
 
 def main(imgs, msks, crossfold=False, pretrain=None, augmentation=False, batch_size=8, 
