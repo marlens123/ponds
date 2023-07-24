@@ -1,13 +1,25 @@
+
+1. Create a new anaconda environment with Python 3.10.0
+2. pip install the packages specified in 'requirements.txt'
+
+
+
 # ponds
 
 Changes to make to run code: download .npy files and in train_pipeline, change images, masks and time save path
 
 
-to get code running, navigate to "...python\Lib\site-packages\classification_models\__init__.py" (should be empty) and insert following code:
+
+### If model training does not run, try:
+(see https://github.com/qubvel/segmentation_models/issues/248)
+
+- navigate to your environment directory, and then to "...\Lib\site-packages\classification_models\__init__.py" 
+- if this is empty, insert the following code:
+
+------------------------------------------------------
 
 import keras_applications as ka
 from .__version__ import __version__
-
 
 def get_submodules_from_kwargs(kwargs):
     backend = kwargs.get('backend', ka._KERAS_BACKEND)
@@ -16,8 +28,7 @@ def get_submodules_from_kwargs(kwargs):
     utils = kwargs.get('utils', ka._KERAS_UTILS)
     return backend, layers, models, utils
 
-
-(see https://github.com/qubvel/segmentation_models/issues/248)
+------------------------------------------------------
 
 
 to run VIS segmentation:
