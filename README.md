@@ -28,18 +28,40 @@ to run VIS segmentation:
 
 ----------------------------
 
-semantic segmentation model architecture by quebvel, with changes: Dropout layers added (marked in file with 'CHANGED')
-
-----------------------------
-
-File Contents:
-
-Annotation:
-----------
-- 'data_preparation/extract.ipynb': notebook to extract and save TIR images for visual inspection and mask creation
-- 'data_preparation/edge_detection_annotation.ipynb': notebook used to create edge maps for annotation
+The weights of our final model can be found in 'model_weights/best_modelfinal_runsharpen.h5'. We also included the weights of a patch size 32 x 32 configuration, as we used these for testing smooth patch prediction.
 
 
-Coding references:
-- https://www.kaggle.com/code/ayuraj/efficientnet-mixup-k-fold-using-tf-and-wandb/notebook (wandb and k-crossfold validation)
-- patchify library for patch extraction
+Files to recreate our experiments:
+---------------------------------
+- 'data_preparation/extract.ipynb': to extract TIR images for inspection
+- 'data_preparation/edge_detection.ipynb': to create edge maps used for annotation
+- 'prepare_data.py': to create prepared np arrays from .nc files
+- 'train.py': contains our training pipeline
+- 'model_selection.py': to recreate the model training (runs 'train.py' with different configurations) 
+- 'qualitative_evaluation.ipynb': to recreate our qualitative evaluation predictions
+- 'predict_image.py': contains the function used for prediction
+- 'mpf.ipynb': to recreate our melt pond fraction computations
+
+
+Additional file contents:
+-------------------------
+'visualize.ipynb' was used to create visualizations in our thesis
+
+'utils/' contains 
+- 'smooth_tiled_predictions.py': patch stitching function that we integrated in our prediction function. We copied the content of this file from https://github.com/bnsreenu/python_for_microscopists/tree/master/229_smooth_predictions_by_blending_patches. For more information on the reference, see the file head
+- 'patch_extraction.py': for patch extraction (used in 'train.py')
+- 'data.py': to load data for model training (used in 'train.py'), inspired by https://github.com/qubvel/segmentation_models/blob/master/examples/multiclass%20segmentation%20(camvid).ipynb 
+- 'augmentation.py': contains augmentation and preprocessing function. Uses albumentation library (https://github.com/albumentations-team/albumentations)
+- 'image_transform.py': contains functions for image transformation
+
+
+'models/segmentation_models_qubvel/': contains the segmentation models repository (https://github.com/qubvel/segmentation_models). We added the option to train with dropout layers in 'segmentation_models/models/unet.py' (marked in file with 'CHANGED')
+
+'vis_segmentation/' contains the OSSP classification algorithm (repo downloaded from https://github.com/wrightni/OSSP)
+
+
+Additional coding references:
+-----------------------------
+- wandb and k-crossfold validation: https://www.kaggle.com/code/ayuraj/efficientnet-mixup-k-fold-using-tf-and-wandb/notebook
+- patchify library for patch extraction: https://pypi.org/project/patchify/
+- patch prediction: https://github.com/bnsreenu/python_for_microscopists/blob/master/206_sem_segm_large_images_using_unet_with_custom_patch_inference.py 

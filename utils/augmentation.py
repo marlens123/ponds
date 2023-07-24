@@ -9,6 +9,8 @@ def round_clip_0_1(x, **kwargs):
 
 def get_training_augmentation(im_size, mode=0):
     """
+    structure inspired by https://github.com/qubvel/segmentation_models/blob/master/examples/multiclass%20segmentation%20(camvid).ipynb
+    
     Defines augmentation for training data. Each technique applied with a probability.
     
     Parameters:
