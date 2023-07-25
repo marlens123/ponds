@@ -1,3 +1,5 @@
+# Copyright (c) 2017 Nicholas Wright
+
 # OSSP Process
 # Usage: Fully processes all images in the given directory with the given training data.
 # Nicholas Wright
