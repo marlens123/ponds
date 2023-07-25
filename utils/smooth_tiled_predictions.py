@@ -2,6 +2,8 @@
 # source of this file: https://github.com/bnsreenu/python_for_microscopists/tree/master/229_smooth_predictions_by_blending_patches
 # https://youtu.be/HrGn4uFrMOM
 
+# Copyright (c) 2017 Vooban Inc.
+
 """
 Original code is from the following source. It comes with MIT License so please mention
 the original reference when sharing.
