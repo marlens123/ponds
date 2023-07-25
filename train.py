@@ -32,7 +32,7 @@ class TimingCallback(keras.callbacks.Callback):
 
 
 def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34', batch_size=4, weight_classes=False, epochs=100,
-              class_weights=None, loss='categoricalCE', optimizer='Adam', augmentation=None, input_normalize=False, freeze_tune=False,
+              class_weights=None, loss='categoricalCE', optimizer='Adam', augmentation=None, input_normalize=False, fold_no=None, final_run=False, freeze_tune=False,
               early_stop=False):
     """
     Training function.
@@ -61,6 +61,10 @@ def run_train(X_train, y_train, X_test, y_test, model, pref, backbone='resnet34'
             if True, uses fixed feature extractor when pre-training
         input_normalize : Bool
             (not used) whether to normalize input
+        fold_no : int
+            number of the crossfold run
+        final_run : Bool
+            whether this is the final run (without crossfold validation)
         batch_size : int
         augmentation : 
             on-fly augmentation methods (if to be appplied; else None)

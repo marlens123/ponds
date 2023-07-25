@@ -41,14 +41,16 @@ to run VIS segmentation:
 
 The weights of our final model can be found in 'model_weights/best_modelfinal_runsharpen.h5'. We also included the weights of a patch size 32 x 32 configuration, as we used these for testing smooth patch prediction.
 
+In the file heads you will find relative paths to data that you need for running. These paths refer to the myshare folder that comes with the thesis.
 
 Files to recreate our experiments:
 ---------------------------------
+- 'model_selection.py': to recreate the model training (runs 'train.py' with different configurations) 
+- 'train.py': contains our training pipeline (you may need to adjust the wandb login in this file)
+
 - 'data_preparation/extract.ipynb': to extract TIR images for inspection
 - 'data_preparation/edge_detection.ipynb': to create edge maps used for annotation
 - 'prepare_data.py': to create prepared np arrays from .nc files
-- 'train.py': contains our training pipeline
-- 'model_selection.py': to recreate the model training (runs 'train.py' with different configurations) 
 - 'qualitative_evaluation.ipynb': to recreate our qualitative evaluation predictions
 - 'predict_image.py': contains the function used for prediction
 - 'mpf.ipynb': to recreate our melt pond fraction computations
