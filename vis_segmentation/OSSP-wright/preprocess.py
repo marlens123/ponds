@@ -1,3 +1,5 @@
+# Copyright (c) 2017 Nicholas Wright
+
 # Code for preprocessing imagery for analysis by the OSSP image processing
 # algorithm. Includes methods to split imagery into more manageable sections,
 # and methods for histogram stretching to scale input images to the full 0,255
