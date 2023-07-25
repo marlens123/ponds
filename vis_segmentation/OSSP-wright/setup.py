@@ -1,3 +1,5 @@
+# Copyright (c) 2017 Nicholas Wright
+
 try:
     from setuptools import setup
     from setuptools import Extension
