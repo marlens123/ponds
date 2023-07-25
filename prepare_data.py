@@ -65,9 +65,9 @@ for f in os.listdir(mask_dir):
 imgs = np.array(imgs_train)
 masks = np.array(masks_train)
 
-# save 480 array
-np.save('E:/polar/code/data/ir/entire/original_size/prepared/480_im.npy', imgs)
-np.save('E:/polar/code/data/ir/entire/original_size/prepared/480_ma.npy', masks)
+# save temperature values as np arrays (not used in final experiment due to bad performance in initial runs)
+#np.save('E:/polar/code/data/ir/entire/original_size/prepared/480_im.npy', imgs)
+#np.save('E:/polar/code/data/ir/entire/original_size/prepared/480_ma.npy', masks)
 
 
 ############### Test Data #####################
@@ -141,7 +141,7 @@ masks_raw = np.array(masks_train)
 
 imgs_raw_norm = np.array(imgs_png_norm)
 
-# save 480 array
+# save as numpy arrays
 np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_im.npy', imgs_raw)
 np.save('E:/polar/code/data/ir/entire/original_size/ims_raw_np/480_ma.npy', masks_raw)
 
