@@ -8,15 +8,11 @@ To make the code work, do the following:
 1. Create a new anaconda environment with Python 3.10.0
 2. pip install the packages specified in 'requirements.txt' (part 1)
 
-
-
-In the respective files, you need to change the paths to the data used, and where you want to store the results. More instructions are contained in the file heads.
-
 ---------------------------------------
 
 The weights of our final model can be found in 'model_weights/best_modelfinal_runsharpen500.h5'. We also included the weights of a patch size 32 x 32 configuration, as we used these for testing smooth patch prediction.
 
-In the file heads you will find relative paths to data that you need for running. These paths refer to the myshare folder that comes with the thesis.
+In the file heads you will find relative paths to data that you need for running the code. These paths refer to the myshare folder that comes with the thesis.
 
 
 Files to recreate our experiments:
