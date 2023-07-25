@@ -71,7 +71,7 @@ To run the OSSP classification algorithm (https://github.com/wrightni/OSSP), do 
 2. conda install the packages specified in 'requirements.txt' (part 2)
 3. Follow the instruction in './vis_segmentation/OSSP-wright/readme.md'
 
-(!installation may not work properly due to changed package dependencies. I recommend using the transferred classified images directly (relevant for 'mpf.ipynb'!)
+(installation may not work properly due to changed package dependencies. I recommend using the classified images, transferred shared in the myshare folder. This is relevant for 'mpf.ipynb')
 
 ----------------------------
 Additional coding references:
