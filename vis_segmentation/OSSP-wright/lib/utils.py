@@ -1,3 +1,5 @@
+# Copyright (c) 2017 Nicholas Wright
+
 import h5py
 import os
 import csv

@@ -1,3 +1,5 @@
+#Copyright (c) 2017 Nicholas Wright
+
 import numpy as np
 from ctypes import *
 import skimage.morphology as morph

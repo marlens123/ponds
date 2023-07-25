@@ -1,3 +1,6 @@
+
+# Copyright (c) 2018, Pavel Yakubovskiy
+
 from .base import Loss
 from .base import functional as F
 

@@ -1,3 +1,5 @@
+# Copyright (c) 2017 Nicholas Wright
+
 #title: Training Set Creation for Random Forest Classification
 #author: Nick Wright
 #Inspired by: Justin Chen

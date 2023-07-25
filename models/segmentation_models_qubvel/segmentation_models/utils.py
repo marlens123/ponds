@@ -1,3 +1,6 @@
+
+#Copyright (c) 2018, Pavel Yakubovskiy
+
 """ Utility functions for segmentation models """
 
 from keras_applications import get_submodules_from_kwargs

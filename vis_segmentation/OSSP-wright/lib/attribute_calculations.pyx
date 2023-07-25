@@ -1,3 +1,5 @@
+# Copyright (c) 2017 Nicholas Wright
+
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False

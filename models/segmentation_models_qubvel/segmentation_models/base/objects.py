@@ -1,3 +1,6 @@
+
+#Copyright (c) 2018, Pavel Yakubovskiy
+
 class KerasObject:
     _backend = None
     _models = None

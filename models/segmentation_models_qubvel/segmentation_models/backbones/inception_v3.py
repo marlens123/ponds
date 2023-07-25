@@ -1,3 +1,6 @@
+
+#Copyright (c) 2018, Pavel Yakubovskiy
+
 """Inception V3 model for Keras.
 Note that the input image format for this model is different than for
 the VGG16 and ResNet models (299x299 instead of 224x224),

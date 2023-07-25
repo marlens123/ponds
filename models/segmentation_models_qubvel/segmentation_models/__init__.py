@@ -1,3 +1,5 @@
+# Copyright (c) 2018, Pavel Yakubovskiy
+
 import os
 import functools
 from .__version__ import __version__

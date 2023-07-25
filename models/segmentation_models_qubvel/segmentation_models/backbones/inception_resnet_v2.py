@@ -1,3 +1,6 @@
+
+#Copyright (c) 2018, Pavel Yakubovskiy
+
 """Inception-ResNet V2 model for Keras.
 Model naming and structure follows TF-slim implementation
 (which has some additional layers and different number of

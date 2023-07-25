@@ -1,3 +1,5 @@
+# Copyright (c) 2017 Nicholas Wright
+
 # title: Watershed Transform
 # author: Nick Wright
 # adapted from: Justin Chen, Arnold Song

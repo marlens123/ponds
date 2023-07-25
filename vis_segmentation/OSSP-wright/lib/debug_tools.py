@@ -1,3 +1,5 @@
+# Copyright (c) 2017 Nicholas Wright
+
 from skimage import segmentation, exposure
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors

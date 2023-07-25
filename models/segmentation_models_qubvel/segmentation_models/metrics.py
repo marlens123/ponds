@@ -1,3 +1,7 @@
+
+
+#Copyright (c) 2018, Pavel Yakubovskiy
+
 from .base import Metric
 from .base import functional as F
 

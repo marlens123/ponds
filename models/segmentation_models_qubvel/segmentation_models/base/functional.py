@@ -1,3 +1,6 @@
+
+#Copyright (c) 2018, Pavel Yakubovskiy
+
 SMOOTH = 1e-5
 
 

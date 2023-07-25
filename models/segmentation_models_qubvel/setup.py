@@ -1,3 +1,5 @@
+# Copyright (c) 2018, Pavel Yakubovskiy
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 

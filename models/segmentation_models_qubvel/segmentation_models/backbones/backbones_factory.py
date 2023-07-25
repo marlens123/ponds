@@ -1,3 +1,6 @@
+
+#Copyright (c) 2018, Pavel Yakubovskiy
+
 import copy
 import efficientnet.model as eff
 from classification_models.models_factory import ModelsFactory

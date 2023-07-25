@@ -1,3 +1,5 @@
+# Copyright (c) 2017 Nicholas Wright
+
 # title: Random Forest Classifier
 # author: Nick Wright
 
