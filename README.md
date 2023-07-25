@@ -1,4 +1,4 @@
-## Detection of melt ponds on Arctic sea ice from infrared images using U-Net
+# Detection of melt ponds on Arctic sea ice from infrared images using U-Net
 
 Code used in my thesis aiming for a Bachelor degree in Cognitive Science, University of Osnabrück.
 The objective of the thesis was to develop a segmentation tool that partitions TIR images into sea ice, melt pond and ocean classes.
