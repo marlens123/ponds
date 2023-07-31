@@ -51,8 +51,6 @@ Additional file contents:
 - navigate to your environment directory, and then to `...\Lib\site-packages\classification_models\__init__.py`
 - if this is empty, insert the following code:
 
-------------------------------------------------------
-
 ```python
 import keras_applications as ka
 from .__version__ import __version__
