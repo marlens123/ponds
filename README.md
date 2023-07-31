@@ -30,7 +30,7 @@ Files to recreate our experiments:
 
 Additional file contents:
 -------------------------
-'`visualize.ipynb`' was used to create visualizations in our thesis
+`visualize.ipynb` was used to create visualizations in our thesis
 
 `utils/` contains 
 - `smooth_tiled_predictions.py`: patch stitching function that we integrated in our prediction function. We copied the content of this file from https://github.com/bnsreenu/python_for_microscopists/tree/master/229_smooth_predictions_by_blending_patches. For more information on the reference, see the file head
