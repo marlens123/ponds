@@ -7,6 +7,7 @@ To make the code work, do the following:
 
 1. Create a new anaconda environment with Python 3.10.0
 2. pip install the packages specified in `requirements.txt` (part 1)
+3. If you try to run `model_selection.py` (recreation of training pipeline), go to [Error1](#Error1) and [Error2](#Error2)
 
 ---------------------------------------
 
@@ -46,6 +47,7 @@ Additional file contents:
 
 
 ### If model training does not run, try:
+Error1
 (see https://github.com/qubvel/segmentation_models/issues/248)
 
 - navigate to your environment directory, and then to `...\Lib\site-packages\classification_models\__init__.py`
@@ -64,6 +66,15 @@ def get_submodules_from_kwargs(kwargs):
     return backend, layers, models, utils
 ```
 ------------------------------------------------------
+
+### To be able login to wandb account
+Error2
+
+- before executing `model_selection.py`or `train.py`, execute the following command: `wand login` and insert the key that was sent via email
+- you can also modify the scripts and login to your own wandb account
+
+------------------------------------------------------
+
 
 To run the OSSP classification algorithm (https://github.com/wrightni/OSSP), do the following:
 
