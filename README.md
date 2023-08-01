@@ -46,7 +46,7 @@ Additional file contents:
 `vis_segmentation/` contains the OSSP classification algorithm (repo downloaded from https://github.com/wrightni/OSSP)
 
 
-### <a id="Error1"></a>If model training does not run, try:
+### <a id="Error1"></a>ERROR1: If model training does not run, try:
 
 (see https://github.com/qubvel/segmentation_models/issues/248)
 
@@ -67,7 +67,7 @@ def get_submodules_from_kwargs(kwargs):
 ```
 ------------------------------------------------------
 
-### <a id="Error2"></a>To be able login to wandb account
+### <a id="Error2"></a>ERROR2: To be able login to wandb account
 
 
 - before executing `model_selection.py`or `train.py`, execute the following command: `wand login` and insert the key that was sent via email
