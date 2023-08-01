@@ -15,7 +15,7 @@ opencv-python==4.6.0.66
 patchify==0.2.3
 scikit-learn==1.1.3
 scikit-image==0.19.3
-segmentation-models 1.0.1
+segmentation-models==1.0.1
 wandb==0.15.3
 netcdf4==1.6.4
 keras==2.10.0
@@ -31,8 +31,8 @@ pillow==9.3.0
 classification-models==0.1
 
 # needed for plotting model summary
-pyplot==
-graphviz==2.50.0 
+pyplot
+graphviz
 
 
 #############################################
