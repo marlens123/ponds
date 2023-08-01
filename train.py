@@ -297,8 +297,8 @@ def train_wrapper(X, y, im_size, base_pref, backbone='resnet34', loss='categoric
     print(type(model))
     print(model.summary())
 
-    dot_img_file = './summary/model_dropout.png'
-    tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True, dpi=300)
+    #dot_img_file = './summary/model_dropout.png'
+    #tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True, dpi=300)
 
 
     #################################################################
