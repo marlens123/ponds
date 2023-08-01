@@ -30,7 +30,7 @@ scipy==1.9.3
 pillow==9.3.0
 classification-models==0.1
 
-# needed for plotting model summary
+# (the following are only needed for plotting model summary, which is currently commented in the respective file `train.py`)
 pyplot
 graphviz
 
