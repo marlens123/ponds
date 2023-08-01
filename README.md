@@ -46,7 +46,7 @@ Additional file contents:
 `vis_segmentation/` contains the OSSP classification algorithm (repo downloaded from https://github.com/wrightni/OSSP)
 
 
-### <a id="Error1"></a>ERROR1: If model training does not run, try:
+### <a id="Error1"></a>ERROR1: If you get the error `ImportError: cannot import name 'get_submodules_from_kwargs'`
 
 (see https://github.com/qubvel/segmentation_models/issues/248)
 
