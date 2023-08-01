@@ -7,7 +7,7 @@ To make the code work, do the following:
 
 1. Create a new anaconda environment with Python 3.10.0
 2. pip install the packages specified in `requirements.txt` (part 1)
-3. If you try to run `model_selection.py` (recreation of training pipeline), go to [Error1](#Error1) and [Error2](#Error2)
+3. If you try to run `model_selection.py` (recreation of training pipeline), go to ERROR1 and ERROR2 further below in this file
 
 ---------------------------------------
 
