@@ -47,7 +47,7 @@ Additional file contents:
 
 
 ### If model training does not run, try:
-Error1
+<a name="Error1"></a>
 (see https://github.com/qubvel/segmentation_models/issues/248)
 
 - navigate to your environment directory, and then to `...\Lib\site-packages\classification_models\__init__.py`
@@ -68,7 +68,7 @@ def get_submodules_from_kwargs(kwargs):
 ------------------------------------------------------
 
 ### To be able login to wandb account
-Error2
+<a name="Error2"></a>
 
 - before executing `model_selection.py`or `train.py`, execute the following command: `wand login` and insert the key that was sent via email
 - you can also modify the scripts and login to your own wandb account
