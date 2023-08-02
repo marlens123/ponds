@@ -71,7 +71,7 @@ def get_submodules_from_kwargs(kwargs):
 ### <a id="Error2"></a>ERROR2: To be able login to wandb account
 
 
-- before executing `model_selection.py`or `train.py`, execute the following command: `wand login` and insert the key that was sent via email
+- before executing `model_selection.py`or `train.py`, execute the following command: `wand login` and insert the key that was sent via email. This is for experiment tracking 
 - you can also modify the scripts and login to your own wandb account
 
 ------------------------------------------------------
