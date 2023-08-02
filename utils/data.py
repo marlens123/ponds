@@ -38,7 +38,6 @@ class Dataset:
             preprocessing=None,
             normalize=False,
     ):
-        #self.ids = images.tolist()
         self.images_fps = images.tolist()
         self.masks_fps = masks.tolist()
         
@@ -76,6 +75,7 @@ class Dataset:
         image = image.astype(np.float32)
         mask = mask.astype(np.float32)
 
+        # optional normalization (not used in thesis)
         print("Image shape before normalization...", image.shape)
         if self.normalize:
             image = image / 255

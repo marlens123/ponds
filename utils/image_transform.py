@@ -5,6 +5,9 @@ from skimage.transform import resize
 import matplotlib.pyplot as plt
 
 def transform_color(image):
+    """
+    transforms 255-graylevel values to 0,1,2 as mask values
+    """
     uniques = np.unique(image[-1])
     for idx,elem in enumerate(uniques):
         mask = np.where(image == elem)
@@ -17,6 +20,9 @@ def transform_color(image):
 
 
 def crop_center_square(image, im_size=480):
+    """
+    crop center of image
+    """
     size=im_size
     # original image dimensions
     height, width = image.shape[:2]
@@ -32,12 +38,18 @@ def crop_center_square(image, im_size=480):
 
 
 def resize_image(image, size=(640,480)):
+    """
+    resize image to specified size
+    """
     # interpolation nearest neighbour to keep number of pixel unique values. 3 corresponds to INTER_AREA
     image = cv2.resize(image, dsize=size, interpolation=0)
     return image
     
 
 def transform_imgs(image_path, save_path=None, im_size=(640,480)):
+    """
+    preprocessing for images: center crop
+    """
     for idx, f in enumerate(os.listdir(image_path)):
         img = cv2.imread(os.path.join(image_path, f), 0)
         crp_img = crop_center_square(img, im_size)
@@ -48,6 +60,9 @@ def transform_imgs(image_path, save_path=None, im_size=(640,480)):
 
 
 def transform_masks(mask_path, save_path=None, im_size=(640,480)):
+    """
+    preprocessing for masks: transform color, resize, center crop
+    """
     for idx, f in enumerate(os.listdir(mask_path)):
         img = cv2.imread(os.path.join(mask_path, f), 0)
         # first change color values (no black line), resize, crop

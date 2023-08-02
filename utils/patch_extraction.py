@@ -1,8 +1,15 @@
 import numpy as np
 from patchify import patchify
+from skimage.util import view_as_windows
+from sklearn.feature_extraction import image
+import cv2
+import os
 
 
 def patch_extraction(imgs, masks, size, step):
+    """
+    Extracts patches from an image and mask using a sliding window with specified step size.
+    """
 
     img_patches = []
     for img in imgs:     
@@ -26,23 +33,14 @@ def patch_extraction(imgs, masks, size, step):
     return images, masks
 
 
-from skimage.util import view_as_windows
-from sklearn.feature_extraction import image
-import cv2
-import os
-
 def extract_patches(img, rnd_state, nr_patches, patch_size):
     """
-    Extracts patches from given image using a sliding window.
+    Extracts a given number of random patches from image.
 
     Parameters:
     -----------
         img : numpy.nd.array
             image to extract patches from
-        patch_nr_total : int
-            keeps track of number of already created patches for storage name
-        save_folder : str
-            folder where resulting patches should get stored
         nr_patches : int
         patch_size : tuple
     """
@@ -53,8 +51,9 @@ def extract_patches(img, rnd_state, nr_patches, patch_size):
 
 
 def patch_pipeline(imgs, masks, patch_size, nr_patches):
-    # make sure that random state differs for each image
-    # but is the same for each image/mask pair
+    """
+    wrapper around random patch function to extract the same patches for image and mask
+    """
     
     patch_size = (patch_size, patch_size)
     
