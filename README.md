@@ -19,7 +19,7 @@ In the file heads you will find relative paths to data that you need for running
 Files to recreate our experiments:
 ---------------------------------
 - `model_selection.py`: to recreate the model training (runs `train.py` with different configurations) 
-- `train.py`: contains our training pipeline (you may need to adjust the wandb login in this file)
+- `train.py`: contains our training pipeline (note that this file contains a wandb login)
 
 - `data_preparation/extract.ipynb`: to extract TIR images for inspection
 - `data_preparation/edge_detection.ipynb`: to create edge maps used for annotation
