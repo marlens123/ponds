@@ -85,8 +85,9 @@ To run the OSSP classification algorithm (https://github.com/wrightni/OSSP), do 
 (installation may not work properly due to changed package dependencies. I recommend using the classified images, transferred shared in the myshare folder. This is relevant for `mpf.ipynb`)
 
 ----------------------------
-Additional coding references:
+Additional references:
 -----------------------------
 - wandb and k-crossfold validation: https://www.kaggle.com/code/ayuraj/efficientnet-mixup-k-fold-using-tf-and-wandb/notebook
 - patchify library for patch extraction: https://pypi.org/project/patchify/
 - patch prediction: https://github.com/bnsreenu/python_for_microscopists/blob/master/206_sem_segm_large_images_using_unet_with_custom_patch_inference.py 
+- my brother Linus has helped with final markdown formatting of this README file
