@@ -35,7 +35,7 @@ Additional file contents:
 `stats.ipynb` was used to create statistics for our thesis
 
 `utils/` contains 
-- `smooth_tiled_predictions.py`: patch stitching function that we integrated in our prediction function. We copied the content of this file from https://github.com/bnsreenu/python_for_microscopists/tree/master/229_smooth_predictions_by_blending_patches. For more information on the reference, see the file head
+- `smooth_tiled_predictions.py`: patch stitching function that we integrated in our prediction function. We copied the content of this file from https://github.com/bnsreenu/python_for_microscopists/tree/master/229_smooth_predictions_by_blending_patches, who corrected small errors in the original code by https://github.com/Vooban/Smoothly-Blend-Image-Patches. For more information on the reference, see the file head
 - `patch_extraction.py`: for patch extraction (used in `train.py`)
 - `data.py`: to load data for model training (used in `train.py`), inspired by https://github.com/qubvel/segmentation_models/blob/master/examples/multiclass%20segmentation%20(camvid).ipynb 
 - `augmentation.py`: contains augmentation and preprocessing function. Uses albumentation library (https://github.com/albumentations-team/albumentations)
